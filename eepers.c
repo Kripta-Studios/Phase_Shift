@@ -1492,26 +1492,26 @@ void render_hud(GameState* game) {
     Color phase_color = (game->player.phase_system.current_phase == PHASE_RED)
                        ? (Color){255, 100, 100, 255}
                        : (Color){100, 100, 255, 255};
-    DrawText(phase_text, SCREEN_WIDTH - 200, 50, 20, phase_color);
+    DrawText(phase_text, GetScreenWidth() - 200, 50, 20, phase_color);
     
     if (game->player.phase_system.state == PHASE_STATE_SUPERPOSITION) {
         char super_text[50];
         sprintf(super_text, "SUPERPOSITION: %d", 
                game->player.phase_system.superposition_turns_left);
-        DrawText(super_text, SCREEN_WIDTH - 300, 80, 20, YELLOW);
+        DrawText(super_text, GetScreenWidth() - 300, 80, 20, YELLOW);
     }
     
     if (game->player.dead) {
         const char* death_text = "YOU DIED!";
         int text_width = MeasureText(death_text, 68);
         DrawText(death_text, 
-                SCREEN_WIDTH / 2 - text_width / 2 + 2, 
-                SCREEN_HEIGHT / 2 - 34 + 2, 
+                GetScreenWidth() / 2 - text_width / 2 + 2, 
+                GetScreenHeight() / 2 - 34 + 2, 
                 68, 
                 PALETTE[2]);
         DrawText(death_text, 
-                SCREEN_WIDTH / 2 - text_width / 2, 
-                SCREEN_HEIGHT / 2 - 34, 
+                GetScreenWidth() / 2 - text_width / 2, 
+                GetScreenHeight() / 2 - 34, 
                 68, 
                 PALETTE[5]);
     }
@@ -1532,8 +1532,8 @@ void cleanup_game(GameState* game) {
 int main(void) {
     srand(time(NULL));
     
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Quantum Eepers v1.0");
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_FULLSCREEN_MODE | FLAG_VSYNC_HINT);
+    InitWindow(0, 0, "Quantum Eepers v1.0");
     SetTargetFPS(144);
     
     InitAudioDevice();
@@ -1562,6 +1562,10 @@ int main(void) {
     
     while (!WindowShouldClose()) {
         UpdateMusicStream(ambient_music);
+        
+        if (IsKeyPressed(KEY_F11)) {
+            ToggleFullscreen();
+        }
         
         if (game.player.dead) {
             if (GetTime() - game.player.death_time > 2.0) {
