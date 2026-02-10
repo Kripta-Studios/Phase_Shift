@@ -2,6 +2,7 @@
 *.o
 eepers-linux
 eepers.exe
+eepers
 test
 test.exe
 *.swp
@@ -10,3 +11,8 @@ eepers.app
 
 .idea
 .DS_Store
+
+# C artifacts
+*.obj
+eepers_c
+eepers_c.exe

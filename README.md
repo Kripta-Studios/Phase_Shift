@@ -1,4 +1,4 @@
-# Eepers
+# Eepers (C Port)
 
 <p align=center>
   <img src="./assets/icon.png">
@@ -12,16 +12,32 @@ Music by Type 42
 - https://www.youtube.com/@Type42
 - https://type42.bandcamp.com/
 
-Download (Windows + Linux):
-- GitHub: https://github.com/tsoding/eepers/releases
-- Itch.io: https://tsoding.itch.io/eepers
+This is a **C port** of the original [Ada version](https://github.com/tsoding/eepers).
+
+## Dependencies
+
+- [Raylib](https://www.raylib.com/) (Version 5.0 or later recommended)
 
 ## Building from Source Code
 
 ### Linux
 
-Install GNAT Ada Compiler. It should be available in your Distro Repos.
+Ensure `gcc` and `raylib` are installed.
 
 ```console
 $ ./build-linux.sh
+# OR
+$ make
+```
+
+### Windows (MinGW)
+
+```console
+$ ./build-mingw32-w64.sh
+```
+
+### MacOS
+
+```console
+$ ./build-macos.sh
 ```

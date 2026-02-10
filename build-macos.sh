@@ -2,7 +2,7 @@
 
 set -xe
 
-gnatmake -f -O3 -Wall -Wextra -gnat2012 eepers.adb -bargs -static -largs -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL ./raylib/raylib-5.0_macos/lib/libraylib.a
+gcc -O3 -Wall -Wextra -std=c99 -o eepers eepers.c -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL $(pkg-config --libs --cflags raylib)
 
 # Bundle executable in an Application
 rm -rf ./eepers.app
