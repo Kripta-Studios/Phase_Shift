@@ -1534,7 +1534,7 @@ int main(void) {
     
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Quantum Eepers v1.0");
-    SetTargetFPS(60);
+    SetTargetFPS(144);
     
     InitAudioDevice();
     
