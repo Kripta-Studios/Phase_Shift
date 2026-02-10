@@ -65,11 +65,14 @@ Durante el cambio de fase hay una ventana de **3 turnos** donde existes en **AMB
 
 ### 3. Quantum Echo (Eco Cuántico)
 
-Al completar el cambio de fase, aparece un "eco" en la fase anterior que **repite tus últimos movimientos**:
-- Tiene física real: activa botones, empuja objetos
-- Semi-transparente con glow intenso
-- Máximo 3 ecos activos simultáneamente
-- Se desvanece tras completar la secuencia
+Al pulsar **ESPACIO**, entras en Superposición. Un "Eco" grabará tus acciones durante 12 turnos y luego las repetirá en bucle.
+
+**Guía de uso para Puzzles:**
+1. **Posiciónate**: Colócate donde quieras que actúe tu Eco (ej. sobre un botón).
+2. **Graba**: Pulsa ESPACIO. 
+3. **Espera**: Usa la tecla **[T]** o **[.]** para pasar turnos sin moverte.
+4. **Ejecuta**: Al terminar la grabación, el Eco aparecerá y repetirá lo que hiciste (ej. quedarse pisando el botón).
+5. **Coopera**: Mientras tu Eco mantiene el botón pulsado, tú eres libre para cruzar la puerta o pulsar un segundo botón.
 
 ### 4. Detectores Cuánticos
 
@@ -168,7 +171,14 @@ LDFLAGS = -lraylib -lm -lpthread    # Librerías: Raylib, math, threads
 
 ## 🧬 Arquitectura del Código
 
-Todo el juego está en un solo archivo: **`eepers.c`** (~4000 líneas)
+El código del juego ha sido refactorizado en múltiples módulos para mejorar la mantenibilidad:
+
+- **src/main.c**: Punto de entrada, bucle principal y gestión de estados.
+- **src/common.h**: Definiciones compartidas (structs, enums, constantes).
+- **src/utils.c/h**: Funciones de utilidad (matemáticas, mapa, colisiones).
+- **src/logic.c/h**: Lógica del juego, IA, actualizaciones de física cuántica.
+- **src/render.c/h**: Sistema de renderizado visual.
+- **src/levels.c/h**: Definición y carga de niveles.
 
 ### Estructuras de Datos Principales
 
@@ -233,13 +243,18 @@ main()
 
 ## 💻 Integración y Compilación
 
-Para compilar el juego desde cero en Windows (con MSYS2/MinGW), utiliza el siguiente comando en la terminal (asegurándote de que `raylib.h` y `libraylib.dll` estén en el directorio):
+Para compilar el juego refactorizado en Windows (con MSYS2/MinGW), utiliza el siguiente comando:
 
 ```bash
-gcc -O3 -Wall -Wextra -std=c99 -I. -L. -o eepers.exe eepers.c -lraylib -lopengl32 -lgdi32 -lwinmm
+gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o eepers.exe src/main.c src/utils.c src/logic.c src/render.c src/levels.c -lraylib -lopengl32 -lgdi32 -lwinmm
 ```
 
-Esto generará el ejecutable `eepers.exe`.
+Alternativamente, si tienes `make` instalado, simplemente ejecuta:
+```bash
+make
+```
+
+Esto generará el ejecutable `eepers_refactored.exe` (o el nombre definido en Makefile).
 
 ---
 

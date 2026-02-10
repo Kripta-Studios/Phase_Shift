@@ -1,35 +1,18 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g
-# Nota: Movemos las librerías comunes aquí, pero el orden final importa en $(CC)
-LDFLAGS = -lraylib -lm -lpthread
+CFLAGS = -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3
+LDFLAGS = -L. -lraylib -lopengl32 -lgdi32 -lwinmm
 
-# OS Specific adjustments
-ifeq ($(OS),Windows_NT)
-    # CORRECCIÓN AQUÍ: Añadido -lglfw3 y -static
-    # El orden es importante: raylib primero, luego sus dependencias (glfw3, opengl, etc.)
-	# usar -mwindows para compilar sin terminal
-    LDFLAGS += -lglfw3 -lopengl32 -lgdi32 -lwinmm
-else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Darwin)
-        LDFLAGS += -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
-    endif
-endif
-
-SRC = eepers.c
+SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c
 OBJ = $(SRC:.c=.o)
-TARGET = eepers_c
+EXEC = eepers_v2.exe
 
-all: $(TARGET)
+all: $(EXEC)
 
-$(TARGET): $(OBJ)
-    # IMPORTANTE: $(LDFLAGS) debe ir AL FINAL para que el enlazador resuelva los símbolos en orden
-	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
+$(EXEC): $(OBJ)
+	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET) $(TARGET).exe
-
-.PHONY: all clean
+	rm -f $(OBJ) $(EXEC).exe
