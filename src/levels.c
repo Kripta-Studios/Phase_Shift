@@ -2,290 +2,369 @@
 #include <stdio.h>
 #include <string.h>
 
+/* ========== NIVEL 1: INTERFERENCIA ========== */
 void load_level_1(GameState *game) {
-  /* LEVEL 1: Duality - Introduction to Phases */
-  int rows = 12;
-  int cols = 16;
-  init_game_state(game, rows, cols);
-  game->current_level = 0;
-  snprintf(game->level_name, 64, "NIVEL 1: DUALIDAD");
-
-  make_room(game);
-
-  /* Simple corridor with phase gates */
-  for (int y = 1; y < rows - 1; y++) {
-    game->map->data[y][5] = CELL_WALL_RED;
-    game->map->data[y][10] = CELL_WALL_BLUE;
-  }
-
-  /* Openings */
-  game->map->data[rows / 2][5] = CELL_FLOOR;
-  game->map->data[rows / 2 + 1][5] = CELL_FLOOR;
-
-  /* Force phase switch */
-  game->map->data[rows / 2][5] = CELL_WALL_RED;   /* Blocked for Red */
-  game->map->data[rows / 2][10] = CELL_WALL_BLUE; /* Blocked for Blue */
-
-  /* Exit */
-  game->exit_position = ivec2(cols - 2, rows / 2);
-  game->map->data[rows / 2][cols - 2] = CELL_EXIT;
-
-  /* Hints */
-  game->player.position = ivec2(2, rows / 2);
-}
-
-void load_level_2(GameState *game) {
-  /* LEVEL 2: Superposition */
-  int rows = 12;
-  int cols = 16;
-  init_game_state(game, rows, cols);
-  game->current_level = 1;
-  snprintf(game->level_name, 64, "NIVEL 2: SUPERPOSICION");
-
-  make_room(game);
-
-  /* A wall that blocks BOTH phases */
-  for (int y = 1; y < rows - 1; y++) {
-    game->map->data[y][8] = CELL_WALL_RED;
-    if (y % 2 == 0)
-      game->map->data[y][8] = CELL_WALL_BLUE;
-  }
-
-  /* The only way through is Superposition (Space) */
-  /* Or actually, if it blocks Red AND Blue, you can't pass unless... */
-  /* Wait, Superposition lets you pass RED and BLUE walls? */
-  /* Logic: is_cell_solid returns true if phase matches. */
-  /* If cell is RED, it blocks RED and SUPER. */
-  /* So Superposition blocks EVERYTHING? No, that's bad. */
-  /* Let's check logic:
-     case CELL_WALL_RED: return phase == PHASE_RED || in_superposition;
-     So Superposition logic in current code makes you HIT everything?
-     That means Superposition is a DISADVANTAGE for movement?
-
-     Ah, in original code:
-     CELL_WALL_RED -> blocks RED.
-     If Superposition -> blocks RED.
-
-     So Superposition makes you interact with BOTH.
-     So you can't pass RED or BLUE walls.
-
-     But you can pass NONE?
-
-     Maybe Level 2 should be about *Item* usage or Echos?
-
-     Wait, the docs said "Superposition: exist in both states".
-     If you exist in both, you hit both walls.
-
-     So how to pass a wall? You can't pass a wall.
-     But maybe you need to be in Superposition to activate a detector or button?
-
-     Let's make Level 2 about Buttons.
-  */
-
-  /* Buttons that require specific phases */
-  spawn_button(game, ivec2(8, 4), PHASE_RED);
-  spawn_button(game, ivec2(8, 8), PHASE_BLUE);
-
-  /* Door needs both buttons */
-  /* Currently buttons don't open doors in my logic?
-     Ah, logic needs to be updated to link buttons to doors.
-     The current logic doesn't support that explicitly (no "trigger" system).
-
-     I'll implement a simple "All buttons pressed -> Door opens" rule in logic
-     or level specific check? Or just assume "Check Level Complete" handles it?
-
-     Button logic in `update_pressure_buttons` just sets `is_pressed`.
-     We need something that READS `is_pressed`.
-
-     I'll add a generic "update_doors" to `logic.c` later or simply let the
-     level be passed by reaching exit, but exit is blocked by a DOOR.
-
-     And update `game_player_turn`: if cell is DOOR and *unlocked*, pass.
-     Currently DOOR requires KEY.
-
-     I should add "Electronic Door" that opens with buttons.
-     Or just use `CELL_BARRICADE` that explodes?
-
-     Let's stick to Keys for now for simplicity, or add a mechanic.
-
-     User asked to "make levels fun".
-
-     I'll add "If all buttons pressed, remove all BARRICADES" logic to
-     `logic.c`?
-
-     Yes. That's a good global rule.
-  */
-
-  /* Wall of barricades */
-  for (int y = 1; y < rows - 1; y++) {
-    game->map->data[y][12] = CELL_BARRICADE;
-  }
-
-  /* Player needs to press both buttons. */
-  /* One is RED, one is BLUE. */
-  /* You can switch phase to press one, then the other. */
-  /* But buttons toggle? Or stay pressed if you stand on them? */
-  /* Logic: "Player on button? ... is_pressed = true" */
-  /* If you leave, it becomes false. */
-  /* So you need TWO things on buttons. You + Echo? */
-  /* That's Level 3 (Echoes). */
-
-  /* Level 2: Superposition to press BOTH? */
-  /* If there is a button that requires SUPERPOSITION?
-     "if (in_super || phase == b->phase)"
-     So Superposition presses RED and BLUE buttons.
-
-     But buttons are at different locations.
-
-     Maybe distinct buttons?
-
-     Let's make Level 2 about simple Key finding with Phase Switching avoidance.
-
-     Map:
-     start -> [Blue Wall] -> Key -> [Red Wall] -> Door -> Exit.
-  */
-
-  game->map->data[rows / 2][5] = CELL_WALL_BLUE;
-  allocate_item(game, ivec2(6, rows / 2), ITEM_KEY);
-
-  game->map->data[rows / 2][10] = CELL_WALL_RED;
-  game->map->data[rows / 2][12] = CELL_DOOR;
-
-  game->exit_position = ivec2(14, rows / 2);
-  game->map->data[rows / 2][14] = CELL_EXIT;
-}
-
-void load_level_3(GameState *game) {
-  /* LEVEL 3: Quantum Echoes */
-  int rows = 12;
-  int cols = 16;
-  init_game_state(game, rows, cols);
-  game->current_level = 2;
-  snprintf(game->level_name, 64, "NIVEL 3: ECOS");
-  make_room(game);
-
-  /* Button opens barricade */
-  spawn_button(game, ivec2(cols / 2, rows / 2 - 3), PHASE_RED);
-
-  /* Barricade blocking exit */
-  for (int y = 0; y < rows; y++)
-    game->map->data[y][cols - 4] = CELL_BARRICADE;
-
-  game->exit_position = ivec2(cols - 2, rows / 2);
-  game->map->data[rows / 2][cols - 2] = CELL_EXIT;
-
-  /* Hint: Use Space to record Echo */
-}
-
-void load_level_4(GameState *game) {
-  /* LEVEL 4: Entanglement / Cooperation */
   int rows = 14;
   int cols = 20;
   init_game_state(game, rows, cols);
-  game->current_level = 3;
-  snprintf(game->level_name, 64, "NIVEL 4: COOPERACION");
+  game->current_level = 0;
+  snprintf(game->level_name, 64, "NIVEL 1: INTERFERENCIA");
+
   make_room(game);
 
-  /* Two buttons, need simultaneous press */
-  spawn_button(game, ivec2(4, 4), PHASE_RED);
-  spawn_button(game, ivec2(4, rows - 5), PHASE_BLUE);
-
-  /* Barricade */
-  for (int y = 0; y < rows; y++)
-    game->map->data[y][15] = CELL_BARRICADE;
-
-  game->exit_position = ivec2(18, rows / 2);
-  game->map->data[rows / 2][18] = CELL_EXIT;
-}
-
-void load_level_5(GameState *game) {
-  /* LEVEL 5: Guardians */
-  int rows = 16;
-  int cols = 20;
-  init_game_state(game, rows, cols);
-  game->current_level = 4;
-  snprintf(game->level_name, 64, "NIVEL 5: GUARDIANES");
-  make_room(game);
-
-  /* Guards patroling */
-  spawn_guard(game, ivec2(10, 5));
-  spawn_guard(game, ivec2(10, 10));
-
-  /* Key protected by guards */
-  allocate_item(game, ivec2(15, 8), ITEM_KEY);
-
-  game->map->data[8][18] = CELL_DOOR;
-  game->exit_position = ivec2(19, 8);
-  game->map->data[8][19] = CELL_EXIT;
-
-  /* Player starts far left */
-  game->player.position = ivec2(2, 8);
-}
-
-void load_level_6(GameState *game) {
-  /* LEVEL 6: Tunneling */
-  int rows = 12;
-  int cols = 20;
-  init_game_state(game, rows, cols);
-  game->current_level = 5;
-  snprintf(game->level_name, 64, "NIVEL 6: TUNELADO");
-  make_room(game);
-
-  /* Wall with no opening */
-  for (int y = 1; y < rows - 1; y++)
-    game->map->data[y][10] = CELL_WALL;
-
-  /* Tunnel zone */
-  spawn_tunnel(game, ivec2(9, 5), ivec2(2, 2));
-
-  game->player.position = ivec2(2, 6);
-  game->exit_position = ivec2(18, 6);
-  game->map->data[6][18] = CELL_EXIT;
-}
-
-void load_level_7(GameState *game) {
-  /* LEVEL 7: Detectors */
-  int rows = 16;
-  int cols = 24;
-  init_game_state(game, rows, cols);
-  game->current_level = 6;
-  snprintf(game->level_name, 64, "NIVEL 7: OBSERVACION");
-  make_room(game);
-
-  /* Detectors watching a corridor */
-  for (int x = 5; x < 20; x += 3) {
-    spawn_detector(game, ivec2(x, 1), DIR_DOWN, PHASE_RED);
-    spawn_detector(game, ivec2(x + 1, rows - 2), DIR_UP, PHASE_BLUE);
+  /* Patrón de interferencia cuántica: muros alternados rojo/azul */
+  for (int x = 6; x <= 14; x++) {
+    for (int y = 2; y < rows - 2; y++) {
+      if ((x + y) % 2 == 0) {
+        game->map->data[y][x] = CELL_WALL_RED;
+      } else {
+        game->map->data[y][x] = CELL_WALL_BLUE;
+      }
+    }
   }
 
+  /* Crear "caminos" específicos para cada fase */
+  for (int y = 3; y < rows - 3; y += 3) {
+    game->map->data[y][8] = CELL_FLOOR;
+    game->map->data[y][12] = CELL_FLOOR;
+  }
+
+  /* Llave en el centro del patrón */
+  allocate_item(game, ivec2(10, rows / 2), ITEM_KEY);
+
+  /* Puerta y salida */
+  game->map->data[rows / 2][17] = CELL_DOOR;
+  game->exit_position = ivec2(18, rows / 2);
+  game->map->data[rows / 2][18] = CELL_EXIT;
+
   game->player.position = ivec2(2, rows / 2);
-  game->exit_position = ivec2(22, rows / 2);
-  game->map->data[rows / 2][22] = CELL_EXIT;
 }
 
-void load_level_8(GameState *game) {
-  /* LEVEL 8: The Collapse */
-  int rows = 20;
-  int cols = 30;
+/* ========== NIVEL 2: DUALIDAD ESPIRAL ========== */
+void load_level_2(GameState *game) {
+  int rows = 16;
+  int cols = 20;
   init_game_state(game, rows, cols);
-  game->current_level = 7;
-  snprintf(game->level_name, 64, "NIVEL 8: COLAPSO");
+  game->current_level = 1;
+  snprintf(game->level_name, 64, "NIVEL 2: DUALIDAD ESPIRAL");
+
   make_room(game);
 
-  /* Complex maze with guards, buttons, and detectors */
-  spawn_guard(game, ivec2(15, 5));
-  spawn_guard(game, ivec2(20, 15));
+  /* Espiral roja desde afuera */
+  for (int r = 1; r < 6; r++) {
+    for (int x = r; x < cols - r; x++) {
+      game->map->data[r][x] = CELL_WALL_RED;
+      game->map->data[rows - 1 - r][x] = CELL_WALL_RED;
+    }
+    for (int y = r; y < rows - r; y++) {
+      game->map->data[y][r] = CELL_WALL_RED;
+      game->map->data[y][cols - 1 - r] = CELL_WALL_RED;
+    }
+  }
 
-  spawn_button(game, ivec2(5, 5), PHASE_RED);
-  spawn_button(game, ivec2(25, 15), PHASE_BLUE);
+  /* Espiral azul desplazada */
+  for (int r = 2; r < 5; r++) {
+    for (int x = r; x < cols - r; x++) {
+      game->map->data[r + 1][x] = CELL_WALL_BLUE;
+      game->map->data[rows - 2 - r][x] = CELL_WALL_BLUE;
+    }
+    for (int y = r; y < rows - r; y++) {
+      game->map->data[y][r + 1] = CELL_WALL_BLUE;
+      game->map->data[y][cols - 2 - r] = CELL_WALL_BLUE;
+    }
+  }
 
-  for (int y = 0; y < rows; y++)
-    game->map->data[y][28] = CELL_BARRICADE;
+  /* Aperturas estratégicas */
+  game->map->data[3][3] = CELL_FLOOR;
+  game->map->data[5][cols - 4] = CELL_FLOOR;
+  game->map->data[rows - 4][3] = CELL_FLOOR;
+  game->map->data[rows - 6][cols - 4] = CELL_FLOOR;
+
+  /* Llave en el centro */
+  allocate_item(game, ivec2(cols / 2, rows / 2), ITEM_KEY);
+
+  /* Salida y puerta */
+  game->map->data[rows / 2][cols - 3] = CELL_DOOR;
+  game->exit_position = ivec2(cols - 2, rows / 2);
+  game->map->data[rows / 2][cols - 2] = CELL_EXIT;
 
   game->player.position = ivec2(2, 2);
+}
+
+/* ========== NIVEL 3: PARADOJA TEMPORAL ========== */
+void load_level_3(GameState *game) {
+  int rows = 18;
+  int cols = 24;
+  init_game_state(game, rows, cols);
+  game->current_level = 2;
+  snprintf(game->level_name, 64, "NIVEL 3: PARADOJA TEMPORAL");
+
+  make_room(game);
+
+  /* Tres cámaras separadas por barreras */
+  for (int y = 1; y < rows - 1; y++) {
+    game->map->data[y][8] = CELL_BARRICADE;
+    game->map->data[y][16] = CELL_BARRICADE;
+  }
+
+  /* Botones en cada cámara requiriendo diferentes fases */
+  spawn_button(game, ivec2(4, rows / 2 - 3), PHASE_RED);
+  spawn_button(game, ivec2(12, rows / 2), PHASE_BLUE);
+  spawn_button(game, ivec2(20, rows / 2 + 3), PHASE_RED);
+
+  /* Recarga de bomba para abrir paso si fallan los ecos */
+  allocate_item(game, ivec2(4, rows - 3), ITEM_BOMB_REFILL);
+  game->player.bombs = 1;
+  game->player.bomb_slots = 2;
+
+  /* Salida detrás de la tercera barrera */
+  game->exit_position = ivec2(22, rows / 2);
+  game->map->data[rows / 2][22] = CELL_EXIT;
+
+  game->player.position = ivec2(2, rows / 2);
+}
+
+/* ========== NIVEL 4: ENTRELAZAMIENTO ========== */
+void load_level_4(GameState *game) {
+  int rows = 20;
+  int cols = 28;
+  init_game_state(game, rows, cols);
+  game->current_level = 3;
+  snprintf(game->level_name, 64, "NIVEL 4: ENTRELAZAMIENTO");
+
+  make_room(game);
+
+  /* Sistema de "X" con muros de fase */
+  for (int i = 4; i < rows - 4; i++) {
+    int dist = abs(i - rows / 2);
+    game->map->data[i][10 - dist] = CELL_WALL_RED;
+    game->map->data[i][10 + dist] = CELL_WALL_BLUE;
+    game->map->data[i][18 - dist] = CELL_WALL_BLUE;
+    game->map->data[i][18 + dist] = CELL_WALL_RED;
+  }
+
+  /* Cuatro botones en las esquinas del patrón */
+  spawn_button(game, ivec2(6, 4), PHASE_RED);
+  spawn_button(game, ivec2(22, 4), PHASE_BLUE);
+  spawn_button(game, ivec2(6, rows - 5), PHASE_BLUE);
+  spawn_button(game, ivec2(22, rows - 5), PHASE_RED);
+
+  /* Gran barrera vertical que se abre con los botones */
+  for (int y = 0; y < rows; y++) {
+    game->map->data[y][25] = CELL_BARRICADE;
+  }
+
+  /* Salida */
+  game->exit_position = ivec2(26, rows / 2);
+  game->map->data[rows / 2][26] = CELL_EXIT;
+
+  game->player.position = ivec2(2, rows / 2);
+  game->player.bombs = 0; /* Sin bombas - solo ecos */
+}
+
+/* ========== NIVEL 5: OBSERVADOR HOSTIL ========== */
+void load_level_5(GameState *game) {
+  int rows = 18;
+  int cols = 26;
+  init_game_state(game, rows, cols);
+  game->current_level = 4;
+  snprintf(game->level_name, 64, "NIVEL 5: OBSERVADOR HOSTIL");
+
+  make_room(game);
+
+  /* Laberinto con guardias patrullando */
+  /* Crear paredes internas */
+  for (int y = 3; y < rows - 3; y += 3) {
+    for (int x = 3; x < cols - 2; x++) {
+      if (x % 6 != 0) {
+        game->map->data[y][x] = CELL_WALL;
+      }
+    }
+  }
+
+  /* Guardias en posiciones estratégicas */
+  spawn_guard(game, ivec2(8, 6));
+  spawn_guard(game, ivec2(16, 10));
+  spawn_guard(game, ivec2(12, rows - 7));
+
+  /* Gnomos con llaves */
+  spawn_gnome(game, ivec2(10, 4));
+  spawn_gnome(game, ivec2(20, 8));
+
+  /* Detectores cuánticos añadiendo presión */
+  spawn_detector(game, ivec2(6, rows / 2), DIR_RIGHT, PHASE_RED);
+  spawn_detector(game, ivec2(14, rows / 2), DIR_RIGHT, PHASE_BLUE);
+
+  /* Bombas para estrategia */
+  allocate_item(game, ivec2(4, 4), ITEM_BOMB_REFILL);
+  game->player.bombs = 2;
+  game->player.bomb_slots = 3;
+
+  /* Puerta que requiere 2 llaves */
+  game->map->data[rows / 2][23] = CELL_DOOR;
+  game->exit_position = ivec2(24, rows / 2);
+  game->map->data[rows / 2][24] = CELL_EXIT;
+
+  game->player.position = ivec2(2, 2);
+}
+
+/* ========== NIVEL 6: SUPERPOSICIÓN ESTABLE ========== */
+void load_level_6(GameState *game) {
+  int rows = 16;
+  int cols = 28;
+  init_game_state(game, rows, cols);
+  game->current_level = 5;
+  snprintf(game->level_name, 64, "NIVEL 6: SUPERPOSICION ESTABLE");
+
+  make_room(game);
+
+  /* Crear zona de tunelización en el centro */
+  spawn_tunnel(game, ivec2(10, 6), ivec2(4, 4));
+
+  /* Muro masivo que solo se puede atravesar tunelizando */
+  for (int y = 1; y < rows - 1; y++) {
+    for (int x = 13; x <= 15; x++) {
+      game->map->data[y][x] = CELL_WALL;
+    }
+  }
+
+  /* Botón que abre camino alternativo (por si falla el tunel) */
+  spawn_button(game, ivec2(5, rows / 2), PHASE_RED);
+  for (int y = rows / 2 - 1; y <= rows / 2 + 1; y++) {
+    game->map->data[y][14] = CELL_BARRICADE; /* Se abre con botón */
+  }
+
+  /* Detectores del otro lado */
+  spawn_detector(game, ivec2(18, 4), DIR_DOWN, PHASE_BLUE);
+  spawn_detector(game, ivec2(22, rows - 5), DIR_UP, PHASE_RED);
+
+  /* Salida */
+  game->exit_position = ivec2(26, rows / 2);
+  game->map->data[rows / 2][26] = CELL_EXIT;
+
+  /* Items de ayuda */
+  allocate_item(game, ivec2(3, 3), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(20, rows / 2), ITEM_COHERENCE_PICKUP);
+
+  game->player.position = ivec2(2, rows / 2);
+}
+
+/* ========== NIVEL 7: DECOHERENCIA ========== */
+void load_level_7(GameState *game) {
+  int rows = 22;
+  int cols = 30;
+  init_game_state(game, rows, cols);
+  game->current_level = 6;
+  snprintf(game->level_name, 64, "NIVEL 7: DECOHERENCIA");
+
+  make_room(game);
+
+  /* Grid de detectores creando un campo peligroso */
+  for (int x = 8; x < 24; x += 4) {
+    PhaseKind phase = (x / 4) % 2 == 0 ? PHASE_RED : PHASE_BLUE;
+    spawn_detector(game, ivec2(x, 5), DIR_DOWN, phase);
+    spawn_detector(game, ivec2(x, rows - 6), DIR_UP, phase);
+  }
+
+  for (int y = 8; y < rows - 8; y += 3) {
+    PhaseKind phase = (y / 3) % 2 == 0 ? PHASE_BLUE : PHASE_RED;
+    spawn_detector(game, ivec2(6, y), DIR_RIGHT, phase);
+    spawn_detector(game, ivec2(26, y), DIR_LEFT, phase);
+  }
+
+  /* Muros de fase creando laberinto */
+  for (int y = 6; y < rows - 6; y++) {
+    if (y % 4 != 0) {
+      game->map->data[y][12] = CELL_WALL_RED;
+      game->map->data[y][18] = CELL_WALL_BLUE;
+    }
+  }
+
+  /* Guardias en el laberinto */
+  spawn_guard(game, ivec2(10, 10));
+  spawn_guard(game, ivec2(20, rows - 11));
+
+  /* Pickup de coherencia crítico */
+  allocate_item(game, ivec2(15, rows / 2), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(4, 4), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(28, rows - 5), ITEM_COHERENCE_PICKUP);
+
+  /* Llave protegida */
+  allocate_item(game, ivec2(15, rows / 2 + 3), ITEM_KEY);
+
+  /* Puerta y salida */
+  game->map->data[rows / 2][28] = CELL_DOOR;
   game->exit_position = ivec2(29, rows / 2);
   game->map->data[rows / 2][29] = CELL_EXIT;
+
+  game->player.position = ivec2(2, rows / 2);
 }
+
+/* ========== NIVEL 8: COLAPSO CUÁNTICO ========== */
+void load_level_8(GameState *game) {
+  int rows = 26;
+  int cols = 36;
+  init_game_state(game, rows, cols);
+  game->current_level = 7;
+  snprintf(game->level_name, 64, "NIVEL 8: COLAPSO CUANTICO");
+
+  make_room(game);
+
+  /* Sección 1: Laberinto con detectores */
+  for (int y = 4; y < 10; y++) {
+    for (int x = 4; x < 14; x++) {
+      if ((x - 4) % 3 == 0 || (y - 4) % 3 == 0) {
+        game->map->data[y][x] =
+            (x + y) % 2 == 0 ? CELL_WALL_RED : CELL_WALL_BLUE;
+      }
+    }
+  }
+  spawn_detector(game, ivec2(6, 7), DIR_RIGHT, PHASE_RED);
+  spawn_detector(game, ivec2(12, 7), DIR_LEFT, PHASE_BLUE);
+
+  /* Sección 2: Campo de guardias */
+  spawn_guard(game, ivec2(18, 6));
+  spawn_guard(game, ivec2(24, 10));
+  spawn_guard(game, ivec2(20, 14));
+
+  /* Sección 3: Zona de tunelización */
+  spawn_tunnel(game, ivec2(14, 16), ivec2(3, 3));
+  for (int y = 14; y < 20; y++) {
+    game->map->data[y][18] = CELL_WALL;
+    game->map->data[y][19] = CELL_WALL;
+  }
+
+  /* Sección 4: Sistema de botones complejo */
+  spawn_button(game, ivec2(8, rows - 8), PHASE_RED);
+  spawn_button(game, ivec2(16, rows - 6), PHASE_BLUE);
+  spawn_button(game, ivec2(24, rows - 8), PHASE_RED);
+  spawn_button(game, ivec2(28, rows - 10), PHASE_BLUE);
+
+  /* Barrera final */
+  for (int y = 0; y < rows; y++) {
+    game->map->data[y][32] = CELL_BARRICADE;
+  }
+
+  /* Gnomos con llaves */
+  spawn_gnome(game, ivec2(10, 12));
+  spawn_gnome(game, ivec2(26, rows - 12));
+
+  /* Recursos */
+  allocate_item(game, ivec2(6, 6), ITEM_BOMB_REFILL);
+  allocate_item(game, ivec2(22, 16), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(12, rows - 4), ITEM_COHERENCE_PICKUP);
+
+  game->player.bombs = 2;
+  game->player.bomb_slots = 4;
+
+  /* Salida épica */
+  game->exit_position = ivec2(34, rows / 2);
+  game->map->data[rows / 2][34] = CELL_EXIT;
+
+  game->player.position = ivec2(2, 2);
+}
+
+/* ========== SYSTEM FUNCTIONS ========== */
 
 void load_level(GameState *game, int level_index) {
   switch (level_index) {
@@ -374,61 +453,87 @@ void show_level_dialog(GameState *game) {
   switch (game->current_level) {
   case 0:
     strncpy(d->pages[0].text,
-            "ROJO bloquea ROJO.\nAZUL bloquea AZUL.\nCambia con [Z].",
+            "PATRON DE INTERFERENCIA CUANTICA\n\n"
+            "Los muros forman un patron de interferencia.\n"
+            "ROJO bloquea ROJO. AZUL bloquea AZUL.\n\n"
+            "Cambia con [Z] para navegar el patron.",
             MAX_DIALOG_TEXT);
     break;
   case 1:
     strncpy(d->pages[0].text,
-            "Encuentra la Llave.\nEvita los muros de tu mismo color.",
+            "ESPIRAL DE DUALIDAD\n\n"
+            "Dos espirales entrelazadas de diferentes fases.\n"
+            "Navega entre ellas cambiando de fase.\n\n"
+            "La llave esta en el centro del patron.",
             MAX_DIALOG_TEXT);
     break;
   case 2:
     strncpy(d->pages[0].text,
-            "NIVEL 3: ECOS\n\n"
-            "COMO USAR TU ECO:\n"
-            "1. Ve al boton.\n"
-            "2. Pulsa [ESPACIO] para activar Superposicion.\n"
-            "3. Pulsa [T] o [.] para ESPERAR sobre el boton.\n"
-            "4. Cuando aparezca tu Eco, ¡corre a la salida!\n"
-            "El Eco mantendra el boton pulsado por ti.",
+            "LINEAS TEMPORALES PARALELAS\n\n"
+            "Tres botones. Tres barreras.\n\n"
+            "ESTRATEGIA:\n"
+            "1. Ve al primer boton (ROJO)\n"
+            "2. Pulsa [ESPACIO] para Superposicion\n"
+            "3. Usa [T] para ESPERAR 3-4 turnos\n"
+            "4. Corre al siguiente boton mientras tu eco pulsa el primero\n"
+            "5. Repite hasta abrir todas las barreras",
             MAX_DIALOG_TEXT);
     break;
   case 3:
     strncpy(d->pages[0].text,
-            "NIVEL 4: COOPERACION\n\n"
-            "Dos botones activan la puerta PERMANENTEMENTE.\n\n"
-            "ESTRATEGIA:\n"
-            "1. Ve al primer boton y activa [ESPACIO].\n"
-            "2. Usa [T] varias veces para ESPERAR.\n"
-            "3. Mientras el Eco pulsa uno, ve tu al otro.\n"
-            "¡Al pulsar AMBOS, la puerta se abrirá para siempre!",
+            "ENTRELAZAMIENTO CUANTICO\n\n"
+            "Cuatro botones forman un patron entrelazado.\n"
+            "TODOS deben pulsarse SIMULTANEAMENTE.\n\n"
+            "Necesitaras usar TRES ECOS:\n"
+            "Activa superposicion en cada boton, espera,\n"
+            "y corre al siguiente antes de que termine.",
             MAX_DIALOG_TEXT);
     break;
   case 4:
-    strncpy(d->pages[0].text, "Entidades detectadas.\nSe recomienda sigilo.",
+    strncpy(d->pages[0].text,
+            "ENEMIGOS DETECTADOS\n\n"
+            "Guardias: Patrullan y te persiguen (3 hits)\n"
+            "Gnomos: Huyen pero tienen llaves (1 hit)\n"
+            "Detectores: Reducen tu coherencia si te ven\n\n"
+            "[X] para plantar bombas. Sigilo recomendado.",
             MAX_DIALOG_TEXT);
     break;
   case 5:
     strncpy(d->pages[0].text,
-            "NIVEL 6: TUNELADO\n\n"
-            "Busca la ZONA PURPURA en el suelo.\n"
-            "1. Situate DENTRO de la zona purpura.\n"
-            "2. Pulsa [ESPACIO] para activar Superposicion.\n"
-            "3. La inestabilidad te transportara al otro lado.\n"
-            "¡No te muevas mientras se estabiliza!",
+            "TUNELIZACION CUANTICA\n\n"
+            "Zona PURPURA = Portal cuantico inestable\n\n"
+            "COMO TUNELIZAR:\n"
+            "1. Entra en la zona purpura\n"
+            "2. Pulsa [ESPACIO] para Superposicion\n"
+            "3. Probabilidad 50% de atravesar el muro\n"
+            "4. Si fallas, usa el boton para abrir paso\n\n"
+            "CUIDADO: Los detectores drenan coherencia rapido",
             MAX_DIALOG_TEXT);
     break;
   case 6:
     strncpy(d->pages[0].text,
-            "NIVEL 7: OBSERVACION\n\n"
-            "Los laseres detectan tu presencia.\n"
-            "ROJO te ve si eres ROJO (o Ecos).\n"
-            "AZUL te ve si eres AZUL (o Ecos).\n"
-            "¡Si te ven, tu coherencia caera!",
+            "CAMPO DE OBSERVADORES\n\n"
+            "Grid masivo de detectores cuanticos.\n"
+            "Cada observacion reduce tu coherencia.\n\n"
+            "TACTICAS:\n"
+            "- Recoge TODOS los pickups de coherencia\n"
+            "- Cambia de fase constantemente\n"
+            "- Los detectores ROJOS ven fase ROJA\n"
+            "- Los detectores AZULES ven fase AZUL\n\n"
+            "Planifica tu ruta con cuidado.",
             MAX_DIALOG_TEXT);
     break;
   case 7:
-    strncpy(d->pages[0].text, "Prueba Final.\nCombina todos los protocolos.",
+    strncpy(d->pages[0].text,
+            "PRUEBA FINAL: COLAPSO TOTAL\n\n"
+            "Todas las mecanicas combinadas.\n"
+            "Detectores, Guardias, Tuneles, Botones.\n\n"
+            "Este nivel requiere:\n"
+            "- Precision en ecos temporales\n"
+            "- Gestion perfecta de coherencia\n"
+            "- Uso estrategico de bombas\n"
+            "- Timing impecable\n\n"
+            "No hay atajos. Buena suerte, Sujeto 44.",
             MAX_DIALOG_TEXT);
     break;
   default:
@@ -438,55 +543,34 @@ void show_level_dialog(GameState *game) {
 }
 
 void check_level_events(GameState *game) {
-  /* Handle level-specific logic that isn't generic */
-
-  if (game->current_level == 2) { /* Level 3: Barricade Gate */
-    bool button_pressed = false;
-
-    /* Check if ANY button is pressed (there's only one) */
+  /* NIVEL 3: Barreras que se abren con botones */
+  if (game->current_level == 2) {
+    int pressed_count = 0;
     for (int i = 0; i < MAX_BUTTONS; i++) {
       if (game->buttons[i].is_active && game->buttons[i].is_pressed) {
-        button_pressed = true;
-        break;
+        pressed_count++;
       }
     }
 
-    /* Barricade Column */
-    int gate_col = game->map->cols - 4;
-
-    /* If pressed, open gate. If released, close gate (unless blocked) */
-    for (int y = 0; y < game->map->rows; y++) {
-      Cell c = game->map->data[y][gate_col];
-
-      if (button_pressed) {
-        if (c == CELL_BARRICADE) {
-          game->map->data[y][gate_col] = CELL_FLOOR;
-          PlaySound(phase_shift_sound); /* Reuse sound */
-        }
-      } else {
-        /* Close gate if it was open (FLOOR) and empty */
-        /* We need to know if it WAS a barricade. */
-        /* Hardcoded: The whole column was barricade except borders */
-        if (y > 0 && y < game->map->rows - 1) {
-          if (c == CELL_FLOOR) {
-            bool blocked = false;
-            if (ivec2_eq(game->player.position, ivec2(gate_col, y)))
-              blocked = true;
-            for (int e = 0; e < MAX_EEPERS; e++)
-              if (!game->eepers[e].dead &&
-                  ivec2_eq(game->eepers[e].position, ivec2(gate_col, y)))
-                blocked = true;
-
-            if (!blocked) {
-              game->map->data[y][gate_col] = CELL_BARRICADE;
-            }
-          }
-        }
+    /* Cada botón abre una barrera */
+    if (pressed_count >= 1 &&
+        game->map->data[game->map->rows / 2][8] == CELL_BARRICADE) {
+      for (int y = 0; y < game->map->rows; y++) {
+        game->map->data[y][8] = CELL_FLOOR;
       }
+      PlaySound(phase_shift_sound);
+    }
+    if (pressed_count >= 2 &&
+        game->map->data[game->map->rows / 2][16] == CELL_BARRICADE) {
+      for (int y = 0; y < game->map->rows; y++) {
+        game->map->data[y][16] = CELL_FLOOR;
+      }
+      PlaySound(phase_shift_sound);
     }
   }
 
-  if (game->current_level == 3) { /* Level 4: Dual Buttons */
+  /* NIVEL 4: Todos los botones simultáneamente abren barrera permanentemente */
+  if (game->current_level == 3) {
     bool all_pressed = true;
     int active_count = 0;
     for (int i = 0; i < MAX_BUTTONS; i++) {
@@ -498,33 +582,63 @@ void check_level_events(GameState *game) {
     }
 
     if (active_count > 0 && all_pressed) {
-      /* Open Level 4 Gate (col 15) */
-      int gate_col = 15;
+      int gate_col = 25;
+      bool was_closed = false;
       for (int y = 0; y < game->map->rows; y++) {
         if (game->map->data[y][gate_col] == CELL_BARRICADE) {
           game->map->data[y][gate_col] = CELL_FLOOR;
-          PlaySound(phase_shift_sound);
+          was_closed = true;
         }
       }
+      if (was_closed) {
+        PlaySound(phase_shift_sound);
+      }
     }
-    /* Removed ELSE block: Gate now stays open once opened! */
   }
 
-  if (game->current_level == 7) { /* Level 8: The Collapse */
-    bool all_pressed = true;
+  /* NIVEL 6: Botón abre camino alternativo si falla tunelización */
+  if (game->current_level == 5) {
+    bool button_pressed = false;
     for (int i = 0; i < MAX_BUTTONS; i++) {
-      if (game->buttons[i].is_active && !game->buttons[i].is_pressed) {
-        all_pressed = false;
+      if (game->buttons[i].is_active && game->buttons[i].is_pressed) {
+        button_pressed = true;
+        break;
       }
     }
 
-    if (all_pressed) {
-      int gate_col = 28;
+    if (button_pressed) {
+      for (int y = game->map->rows / 2 - 1; y <= game->map->rows / 2 + 1; y++) {
+        if (game->map->data[y][14] == CELL_BARRICADE) {
+          game->map->data[y][14] = CELL_FLOOR;
+          PlaySound(phase_shift_sound);
+        }
+      }
+    }
+  }
+
+  /* NIVEL 8: Sistema de botones final */
+  if (game->current_level == 7) {
+    bool all_pressed = true;
+    int active_count = 0;
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+      if (game->buttons[i].is_active) {
+        active_count++;
+        if (!game->buttons[i].is_pressed)
+          all_pressed = false;
+      }
+    }
+
+    if (active_count > 0 && all_pressed) {
+      int gate_col = 32;
+      bool was_closed = false;
       for (int y = 0; y < game->map->rows; y++) {
         if (game->map->data[y][gate_col] == CELL_BARRICADE) {
           game->map->data[y][gate_col] = CELL_FLOOR;
-          PlaySound(phase_shift_sound);
+          was_closed = true;
         }
+      }
+      if (was_closed) {
+        PlaySound(phase_shift_sound);
       }
     }
   }

@@ -14,23 +14,16 @@ void cleanup_game(GameState *game) {
       path_free(game->eepers[i].path, game->eepers[i].path_rows);
     }
   }
-
-  /* Unload assets */
-  /* Note: Unloading global assets should probably happen once at end of main,
-     not every time we cleanup a level state?
-     cleanup_game is called at end of main.
-     init_game_state clears structs but doesn't free assets.
-  */
 }
 
 int main(void) {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
   InitWindow(0, 0, "PHASE SHIFT");
-  ToggleFullscreen(); /* Enable Fullscreen by default as requested */
+  ToggleFullscreen();
   SetTargetFPS(144);
 
   InitAudioDevice();
-  SetMasterVolume(1.0f); /* Ensure max volume */
+  SetMasterVolume(1.0f);
 
   /* Load assets */
   for (int i = 0; i < 4; i++) {
@@ -45,7 +38,7 @@ int main(void) {
 
   ambient_music = LoadMusicStream("assets/sounds/ambient.wav");
   PlayMusicStream(ambient_music);
-  SetMusicVolume(ambient_music, 1.0f); /* Increased from 0.5f */
+  SetMusicVolume(ambient_music, 1.0f);
 
   game_font = GetFontDefault();
 
@@ -54,16 +47,15 @@ int main(void) {
   GameState game;
   memset(&game, 0, sizeof(GameState));
 
-  /* Start game */
   load_level(&game, 0);
-  init_intro_dialogs(&game); /* Start with intro dialogs */
+  init_intro_dialogs(&game);
 
   while (!WindowShouldClose()) {
     UpdateMusicStream(ambient_music);
 
     float dt = GetFrameTime();
 
-    /* Map zoom/pan controls (debug mostly) */
+    /* Map zoom/pan controls */
     if (IsKeyDown(KEY_EQUAL))
       game.camera.zoom += 1.0f * dt;
     if (IsKeyDown(KEY_MINUS))
@@ -76,7 +68,6 @@ int main(void) {
     target.x += CELL_SIZE * 0.5f;
     target.y += CELL_SIZE * 0.5f;
 
-    /* Simple lerp for camera */
     game.camera.target.x += (target.x - game.camera.target.x) * dt * 4.0f;
     game.camera.target.y += (target.y - game.camera.target.y) * dt * 4.0f;
 
@@ -97,7 +88,7 @@ int main(void) {
     }
 
     if (game.level_transition_timer > 0.0f) {
-      game.level_transition_timer -= dt * 0.5f; /* 2 seconds total */
+      game.level_transition_timer -= dt * 0.5f;
       if (game.level_transition_timer < 0.0f) {
         game.level_transition_timer = 0.0f;
         game.state_kind = GAME_STATE_PLAYING;
@@ -113,8 +104,6 @@ int main(void) {
           bool was_intro = (d->page_count > 1);
           d->active = false;
           game.state_kind = GAME_STATE_PLAYING;
-          /* If this was intro (multi-page), show first level dialog */
-          /* Only if we haven't shown it yet */
           if (was_intro && game.current_level == 0 && !game.shown_level_intro) {
             show_level_dialog(&game);
             game.state_kind = GAME_STATE_DIALOG;
@@ -127,25 +116,23 @@ int main(void) {
 
     case GAME_STATE_PLAYING: {
       if (game.player.dead) {
-        /* Wait for death anim */
         if (GetTime() - game.player.death_time > 2.0) {
           game.game_over = true;
         }
       } else {
-        /* Check level completion */
         if (check_level_complete(&game)) {
           game.state_kind = GAME_STATE_LEVEL_TRANSITION;
           game.level_transition_timer = 1.0f;
           if (game.current_level < MAX_LEVELS - 1) {
             load_level(&game, game.current_level + 1);
-            show_level_dialog(&game);            /* Show hint for next level */
-            game.state_kind = GAME_STATE_DIALOG; /* Intecept transition */
+            show_level_dialog(&game);
+            game.state_kind = GAME_STATE_DIALOG;
           } else {
             game.state_kind = GAME_STATE_WIN;
           }
         }
 
-        /* Input */
+        /* Input - FIXED: All keys properly separated */
         if (game.turn_animation <= 0.0f) {
           Command cmd = {0};
           bool input = false;
@@ -166,69 +153,22 @@ int main(void) {
             cmd.kind = CMD_STEP;
             cmd.dir = DIR_DOWN;
             input = true;
-          } else if (IsKeyPressed(KEY_Z) ||
-                     IsKeyPressed(KEY_E)) { /* Z or E for Phase */
+          } else if (IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_E)) {
+            /* Z or E: Phase Change / Superposition */
             cmd.kind = CMD_PHASE_CHANGE;
             input = true;
-          } else if (IsKeyPressed(KEY_SPACE) ||
-                     IsKeyPressed(KEY_Q)) { /* Space or Q for Super/Plant? */
-            /* Wait, Space was Superposition/Echo? Or Plant? */
-            /* Logic says: CMD_PLANT triggers bomb plant. */
-            /* Handle_phase_change handles superposition if STABLE. */
-            /* Let's map Space to Superposition/Phase? */
-            /* Original code mapped CMD_PLANT to Space? */
-            /* Let's check original. */
-            /* Input handling was missing in my read of main. */
-
-            /* I'll implement standard controls: */
-            /* Arrows/WASD: Move */
-            /* Z / Shift: Phase Switch (Blue/Red) */
-            /* Space: Superposition / Plant Bomb */
-
-            /* Let's map Space to Superposition (Phase Change if valid). */
-            /* Wait, Phase Change is toggling logic. */
-            /* Superposition is a state change. */
-            /* handle_phase_change handles BOTH? */
-            /* Let's check logic.c handle_phase_change. */
-            /* It checks if STABLE -> goes to SUPERPOSITION. */
-            /* So one key enters Superposition. */
-            /* What key switches phase? */
-            /* update_phase_system switches phase automatically after
-             * Superposition ends. */
-            /* This implies you CAN'T switch phase manually? */
-            /* Ah, level 1 says "Press Z to shift phase". */
-
-            /* Check logic again. handle_phase_change only enters Superposition.
-             */
-            /* It doesn't switch Red <-> Blue directly. */
-            /* Is there another command? */
-            /* Or maybe 'Phase Change' means 'Enter Superposition'? */
-            /* "RED passes RED walls... Press Z to shift." */
-            /* If Z enters Super, you are in BOTH. */
-            /* Then after 3 turns, it switches to OTHER phase. */
-            /* So "Shifting" is indirect. enter super -> wait -> switch. */
-
-            /* Okay, so CMD_PHASE_CHANGE triggers handle_phase_change. */
-
-            /* What about CMD_PLANT? */
-            /* handle_plant_bomb. */
-
-            /* I'll map: */
-            /* Z -> Phase Change */
-            /* X -> Plant Bomb */
-
-            /* And Space -> Phase Change (easier). */
-
-            if (IsKeyPressed(KEY_SPACE)) {
-              cmd.kind = CMD_PHASE_CHANGE;
-              input = true;
-            } else if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_LEFT_SHIFT)) {
-              cmd.kind = CMD_PLANT;
-              input = true;
-            } else if (IsKeyPressed(KEY_T) || IsKeyPressed(KEY_PERIOD)) {
-              cmd.kind = CMD_WAIT;
-              input = true;
-            }
+          } else if (IsKeyPressed(KEY_SPACE)) {
+            /* Space: Superposition */
+            cmd.kind = CMD_PHASE_CHANGE;
+            input = true;
+          } else if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_LEFT_SHIFT)) {
+            /* X or Shift: Plant Bomb */
+            cmd.kind = CMD_PLANT;
+            input = true;
+          } else if (IsKeyPressed(KEY_T) || IsKeyPressed(KEY_PERIOD)) {
+            /* T or Period: Wait (FIXED!) */
+            cmd.kind = CMD_WAIT;
+            input = true;
           }
 
           if (input) {
@@ -266,7 +206,7 @@ int main(void) {
       render_exit_glow(&game);
       render_game_cells(&game);
       render_button_markers(&game);
-      render_tunnels(&game); /* Missing? I'll check render.h */
+      render_tunnels(&game);
       render_items(&game);
       render_bombs(&game);
       render_eepers(&game);
@@ -276,7 +216,7 @@ int main(void) {
 
     EndMode2D();
 
-    render_dark_effects(&game); /* Vignette etc */
+    render_dark_effects(&game);
     render_hud(&game);
 
     if (game.state_kind == GAME_STATE_DIALOG) {

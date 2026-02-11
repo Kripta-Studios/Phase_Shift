@@ -270,3 +270,271 @@ Esto generará el ejecutable `eepers_refactored.exe` (o el nombre definido en Ma
 ## 📄 Licencia
 
 Ver [LICENSE.txt](./LICENSE.txt)
+
+
+# PHASE SHIFT - Juego de Física Cuántica
+
+## 🎮 Descripción del Juego
+
+**PHASE SHIFT** es un juego de puzles roguelike basado en los principios de la física cuántica. Como el "Sujeto 44", un ser capaz de manipular su estado cuántico, debes escapar de unas instalaciones de experimentación atravesando 8 niveles progresivamente más complejos.
+
+El juego combina mecánicas de puzles con conceptos de mecánica cuántica real como la dualidad onda-partícula, superposición cuántica, entrelazamiento, tunelización cuántica y colapso de la función de onda.
+
+## 🌟 Conceptos Cuánticos Implementados
+
+### 1. **Dualidad de Fase (Onda-Partícula)**
+- Existen dos fases: **ROJA** y **AZUL**
+- Fase ROJA: Atraviesas muros AZULES pero los muros ROJOS te bloquean
+- Fase AZUL: Atraviesas muros ROJOS pero los muros AZULES te bloquean
+- Representa el principio de dualidad onda-partícula de la física cuántica
+
+### 2. **Superposición Cuántica**
+- Al activar la superposición, existes en AMBAS fases simultáneamente
+- Durante 12 turnos, interactúas con TODOS los muros (tanto rojos como azules)
+- Crea un "eco temporal" que repite tus acciones pasadas
+- Al finalizar la superposición, colapsa a la fase opuesta
+
+### 3. **Ecos Temporales (Entrelazamiento Temporal)**
+- Al entrar en superposición, tu "yo pasado" se graba
+- Cuando colapsa, ese eco repite tus acciones anteriores
+- Puedes usar hasta 3 ecos simultáneamente para resolver puzles
+- Representan líneas temporales alternativas que coexisten
+
+### 4. **Tunelización Cuántica**
+- Zonas especiales (púrpuras) permiten atravesar muros sólidos
+- Tiene probabilidad de éxito del 50% (naturaleza probabilística cuántica)
+- Solo funciona durante la superposición
+- Basado en el efecto túnel de la mecánica cuántica
+
+### 5. **Detectores Cuánticos (Observadores)**
+- Láseres que detectan fases específicas
+- Si te observan en su fase, reduces coherencia
+- Representa el principio de que la observación afecta el estado cuántico
+- Diferentes detectores para fase ROJA y AZUL
+
+### 6. **Coherencia Cuántica**
+- Tu "medidor de estabilidad" cuántica (0-100%)
+- Se degrada al ser observado o al permanecer en superposición
+- Si llega a 0%, te "disuelves" (Game Over)
+- Se regenera lentamente al estar estable
+
+### 7. **Botones de Presión Cuánticos**
+- Requieren estar en una fase específica para activarse
+- Pueden mantenerse pulsados con ecos
+- Algunos niveles requieren pulsar múltiples botones simultáneamente
+
+## 🎯 Objetivo
+
+Llegar a la **SALIDA** (celda verde brillante) de cada nivel mientras:
+- Gestionas tu coherencia cuántica
+- Evitas a los Eepers (enemigos)
+- Resuelves puzles usando tus habilidades cuánticas
+- Recoges llaves para abrir puertas
+- Usas bombas estratégicamente
+
+## 🕹️ Controles
+
+### Movimiento
+- **Flechas** o **WASD**: Mover en 4 direcciones
+- El juego es por turnos: cada acción consume un turno
+
+### Habilidades Cuánticas
+- **Z**: Cambiar de fase (ROJA ↔ AZUL)
+- **ESPACIO**: Activar Superposición Cuántica
+  - Duración: 12 turnos
+  - Crea un eco temporal de tus acciones
+  - Al finalizar, cambias de fase automáticamente
+- **T** o **.** (punto): ESPERAR (pasar turno sin moverse)
+  - Útil para sincronizar con ecos
+  - Crítico para puzles de múltiples botones
+
+### Combate
+- **X** o **SHIFT IZQUIERDO**: Plantar bomba
+  - Explota en cruz después de 3 turnos
+  - Destruye barricadas
+  - Daña a enemigos
+  - Capacidad limitada (recoger recargas)
+
+### Interfaz
+- **ENTER**: Avanzar diálogos / Reintentar nivel
+- **=**: Zoom in
+- **-**: Zoom out
+- **F11**: Fullscreen toggle (inicia en fullscreen)
+
+## 🎨 Elementos Visuales
+
+### Colores de Celdas
+- **Negro profundo**: Fondo/vacío
+- **Gris oscuro**: Suelo transitable
+- **Gris metálico**: Muros sólidos (nunca atravesables)
+- **Rojo neón**: Muros de fase ROJA
+- **Azul neón**: Muros de fase AZUL
+- **Naranja óxido**: Barricadas (destruibles con bombas)
+- **Cian**: Puertas (requieren llaves)
+- **Verde brillante**: Salida del nivel
+
+### Entidades
+- **Cian brillante**: TÚ (el jugador)
+- **Verde neón**: Guardias (Eepers tipo GUARD)
+- **Naranja**: Gnomos (Eepers tipo GNOME)
+- **Amarillo**: Ojos (indicador de visión)
+
+### Items
+- **Círculo cian**: Llave
+- **Círculo naranja**: Recarga de bomba
+- **Cuadrado morado**: Checkpoint
+- **Círculo amarillo**: Recarga de coherencia
+- **Cuadrado cian**: Estabilizador
+
+### Efectos Especiales
+- **Púrpura**: Zona de tunelización cuántica
+- **Rojo/Azul translúcido**: Muros de fase inactiva
+- **Resplandor verde**: Efecto de salida
+- **Destello púrpura**: Superposición activa
+
+## 📚 Los 8 Niveles
+
+### Nivel 1: DUALIDAD
+**Concepto**: Introducción a las fases
+- Aprende a cambiar entre fase ROJA y AZUL
+- Muros que bloquean según tu fase
+- Simple corredor con obstáculos de color
+
+### Nivel 2: SUPERPOSICIÓN
+**Concepto**: Búsqueda de llaves con cambio de fase
+- Encuentra la llave navegando entre muros de diferentes fases
+- Introduce el concepto de planificación de ruta
+- Requiere cambiar de fase en el momento correcto
+
+### Nivel 3: ECOS CUÁNTICOS
+**Concepto**: Uso de ecos para mantener botones
+- Un botón que abre una barricada
+- Debes usar ESPACIO para crear un eco
+- El eco mantiene el botón mientras tú avanzas
+- **Estrategia**: Posicionarte en el botón → ESPACIO → Esperar con T → Correr a la salida
+
+### Nivel 4: COOPERACIÓN CUÁNTICA
+**Concepto**: Múltiples botones simultáneos
+- DOS botones (uno ROJO, uno AZUL) abren la puerta PERMANENTEMENTE
+- Requiere un eco para el primer botón
+- Mientras el eco pulsa uno, tú vas al otro
+- **Truco**: Una vez ambos pulsados simultáneamente, la puerta queda abierta
+
+### Nivel 5: GUARDIANES
+**Concepto**: Evasión de enemigos
+- Guardias patrullan el área
+- Tienes que conseguir una llave vigilada
+- Los guardias te persiguen si te ven
+- Pueden ser dañados con bombas (3 hits para matar)
+
+### Nivel 6: TUNELIZACIÓN CUÁNTICA
+**Concepto**: Atravesar muros con probabilidad
+- Muro sólido sin apertura
+- Zona púrpura de tunelización
+- Debes estar EN la zona y activar ESPACIO
+- 50% probabilidad de éxito - puede requerir varios intentos
+- **Física real**: Los electrones pueden "tunelizar" barreras
+
+### Nivel 7: OBSERVACIÓN CUÁNTICA
+**Concepto**: Detectores y colapso de coherencia
+- Láseres que detectan fases específicas
+- Láser ROJO te ve si eres ROJO
+- Láser AZUL te ve si eres AZUL
+- Ser detectado reduce tu coherencia
+- Debes cambiar de fase estratégicamente para evitar detección
+
+### Nivel 8: LA PRUEBA FINAL
+**Concepto**: Combinación de todas las mecánicas
+- Guardias + Botones + Barricadas
+- Requiere uso de ecos, fase switching, y timing perfecto
+- Mayor tamaño de mapa (32x20)
+- **Desafío supremo**: Coordinar múltiples elementos simultáneamente
+
+## 🧠 Estrategias Avanzadas
+
+### Uso Óptimo de Ecos
+1. Planifica tu ruta ANTES de activar superposición
+2. Usa T (esperar) para sincronizar timing
+3. Los ecos repiten EXACTAMENTE tus acciones (incluyendo esperas)
+4. Puedes crear hasta 3 ecos para puzles complejos
+
+### Gestión de Coherencia
+- Evita permanecer en superposición innecesariamente
+- Aléjate de detectores cuando sea posible
+- Recoge pickups de coherencia cuando aparezcan
+- La coherencia se regenera lentamente en estado estable
+
+### Combate con Eepers
+- Los guardias tienen 1.0 de vida
+- Las bombas hacen ~0.45 de daño → 3 bombas para matar
+- Los guardias se regeneran lentamente
+- Los gnomos mueren de un hit y sueltan llaves
+
+### Timing de Botones
+- Los botones solo están presionados mientras algo está encima
+- Para mantenerlos pulsados necesitas un eco
+- En el Nivel 4, ambos deben estar pulsados SIMULTÁNEAMENTE
+- Una vez activado el mecanismo, la puerta queda abierta permanentemente
+
+## 🔧 Compilación
+
+```bash
+# Requiere raylib instalado
+gcc -o phase_shift main.c logic.c levels.c render.c utils.c -lraylib -lm
+
+# Ejecutar
+./phase_shift
+```
+
+## 📁 Estructura de Archivos
+
+- `common.h`: Definiciones de tipos y constantes
+- `main.c`: Loop principal del juego
+- `logic.c`: Lógica de juego, física y turnos
+- `levels.c`: Definición de los 8 niveles
+- `render.c`: Renderizado visual
+- `utils.c`: Utilidades y helpers
+- `raylib.h`: Header de la librería gráfica
+
+## 🎵 Recursos de Audio
+
+- `footsteps.mp3`: Pasos del jugador
+- `blast.ogg`: Explosión de bomba
+- `key-pickup.wav`: Recoger llave
+- `bomb-pickup.ogg`: Recoger recarga de bomba
+- `checkpoint.ogg`: Activar checkpoint
+- `popup-show.wav`: Cambio de fase
+- `ambient.wav`: Música ambiental
+
+## 🐛 Notas Técnicas
+
+- El juego corre a 144 FPS
+- Sistema de turnos con animaciones suaves
+- Cámara con seguimiento del jugador
+- Pathfinding BFS para enemigos
+- Sistema de partículas para efectos cuánticos
+
+## 🏆 Consejos para Completar el Juego
+
+1. **Lee los diálogos**: Cada nivel tiene instrucciones específicas
+2. **Practica el timing**: La tecla T es tu mejor amiga
+3. **Planifica antes de actuar**: La superposición no se puede cancelar
+4. **Experimenta con ecos**: Pueden resolver puzles de formas inesperadas
+5. **Gestiona recursos**: Las bombas son limitadas
+6. **Observa los patrones**: Los guardias tienen comportamiento predecible
+
+## 📖 Física Cuántica Real vs. Juego
+
+| Concepto Real | Implementación en Juego |
+|---------------|------------------------|
+| Superposición de estados | Estar en fase ROJA y AZUL simultáneamente |
+| Colapso de función de onda | Fin de superposición → cambio de fase |
+| Dualidad onda-partícula | Sistema de dos fases mutuamente exclusivas |
+| Efecto túnel | Probabilidad de atravesar barreras sólidas |
+| Entrelazamiento | Ecos temporales sincronizados |
+| Observador afecta el sistema | Detectores reducen coherencia |
+| Decoherencia | Pérdida gradual de coherencia cuántica |
+
+---
+
+**¡Disfruta explorando los misterios de la mecánica cuántica!** 🌌⚛️
