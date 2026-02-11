@@ -43,6 +43,7 @@ int main(void) {
   game_font = GetFontDefault();
 
   init_palette();
+  init_post_shader();
 
   GameState game;
   memset(&game, 0, sizeof(GameState));
@@ -171,6 +172,19 @@ int main(void) {
             input = true;
           }
 
+#ifdef DEBUG_MODE
+          if (IsKeyPressed(KEY_F5)) {
+            game.current_level++;
+            if (game.current_level >= MAX_LEVELS) {
+              game.state_kind = GAME_STATE_WIN;
+            } else {
+              load_level(&game, game.current_level);
+              game.level_transition_timer = 2.0f;
+              game.state_kind = GAME_STATE_LEVEL_TRANSITION;
+            }
+          }
+#endif
+
           if (input) {
             execute_turn(&game, cmd);
           }
@@ -194,14 +208,17 @@ int main(void) {
       break;
     }
 
-    BeginDrawing();
+    /* === RENDER WITH POST-PROCESSING SHADER === */
+    if (post_shader_ready) {
+      begin_post_processing();
+    } else {
+      BeginDrawing();
+    }
     ClearBackground(PALETTE[0]);
 
     BeginMode2D(game.camera);
 
-    if (game.state_kind == GAME_STATE_WIN) {
-      render_win_screen();
-    } else {
+    if (game.state_kind != GAME_STATE_WIN) {
       render_grid_lines(&game);
       render_exit_glow(&game);
       render_game_cells(&game);
@@ -216,6 +233,10 @@ int main(void) {
 
     EndMode2D();
 
+    if (game.state_kind == GAME_STATE_WIN) {
+      render_win_screen();
+    }
+
     render_dark_effects(&game);
     render_hud(&game);
 
@@ -226,9 +247,22 @@ int main(void) {
       render_level_transition(&game);
     }
 
+    if (post_shader_ready) {
+      end_post_processing(&game);
+      /* HUD overlay rendered AFTER shader so it stays crisp */
+      render_hud(&game);
+      if (game.state_kind == GAME_STATE_DIALOG) {
+        render_dialog(&game);
+      }
+      if (game.state_kind == GAME_STATE_LEVEL_TRANSITION) {
+        render_level_transition(&game);
+      }
+    }
+
     EndDrawing();
   }
 
+  unload_post_shader();
   cleanup_game(&game);
 
   for (int i = 0; i < 4; i++) {

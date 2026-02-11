@@ -1,6 +1,79 @@
 #include "render.h"
 #include <stdio.h> // for sprintf
 
+/* === POST-PROCESSING SHADER SYSTEM === */
+Shader post_shader = {0};
+RenderTexture2D post_target = {0};
+bool post_shader_ready = false;
+
+static int loc_time = -1;
+static int loc_resolution = -1;
+
+void init_post_shader(void) {
+  int sw = GetScreenWidth();
+  int sh = GetScreenHeight();
+  if (sw <= 0)
+    sw = SCREEN_WIDTH;
+  if (sh <= 0)
+    sh = SCREEN_HEIGHT;
+
+  post_target = LoadRenderTexture(sw, sh);
+  post_shader = LoadShader(0, "assets/shaders/quantum_glow.fs");
+
+  if (post_shader.id > 0) {
+    loc_time = GetShaderLocation(post_shader, "time");
+    loc_resolution = GetShaderLocation(post_shader, "resolution");
+    post_shader_ready = true;
+  } else {
+    post_shader_ready = false;
+  }
+}
+
+void unload_post_shader(void) {
+  if (post_shader_ready) {
+    UnloadShader(post_shader);
+    UnloadRenderTexture(post_target);
+    post_shader_ready = false;
+  }
+}
+
+void begin_post_processing(void) {
+  if (!post_shader_ready)
+    return;
+
+  /* Handle window resize */
+  int sw = GetScreenWidth();
+  int sh = GetScreenHeight();
+  if (sw != post_target.texture.width || sh != post_target.texture.height) {
+    UnloadRenderTexture(post_target);
+    post_target = LoadRenderTexture(sw, sh);
+  }
+
+  BeginTextureMode(post_target);
+  ClearBackground((Color){5, 5, 12, 255});
+}
+
+void end_post_processing(GameState *game) {
+  if (!post_shader_ready)
+    return;
+  EndTextureMode();
+
+  float t = (float)GetTime();
+  float res[2] = {(float)GetScreenWidth(), (float)GetScreenHeight()};
+  SetShaderValue(post_shader, loc_time, &t, SHADER_UNIFORM_FLOAT);
+  SetShaderValue(post_shader, loc_resolution, res, SHADER_UNIFORM_VEC2);
+
+  BeginDrawing();
+  ClearBackground(BLACK);
+  BeginShaderMode(post_shader);
+  /* Draw render texture flipped vertically */
+  DrawTextureRec(post_target.texture,
+                 (Rectangle){0, 0, (float)post_target.texture.width,
+                             -(float)post_target.texture.height},
+                 (Vector2){0, 0}, WHITE);
+  EndShaderMode();
+}
+
 Vector2 interpolate_positions(IVector2 prev, IVector2 curr, float t) {
   Vector2 p = vec2_scale(ivec2_to_vec2(prev), CELL_SIZE);
   Vector2 c = vec2_scale(ivec2_to_vec2(curr), CELL_SIZE);
@@ -287,7 +360,8 @@ void render_hud(GameState *game) {
   char coherence_text[50];
   sprintf(coherence_text, "COHERENCE: %d%%",
           (int)game->player.coherence.current);
-  DrawText(coherence_text, (int)bar_x + 10, (int)bar_y + 5, 20, WHITE);
+  DrawTextEx(game_font, coherence_text, (Vector2){bar_x + 10, bar_y + 5}, 24, 2,
+             WHITE);
 
   const char *phase_text =
       (game->player.phase_system.current_phase == PHASE_RED) ? "PHASE: RED"
@@ -295,27 +369,33 @@ void render_hud(GameState *game) {
   Color phase_color = (game->player.phase_system.current_phase == PHASE_RED)
                           ? (Color){255, 100, 100, 255}
                           : (Color){100, 100, 255, 255};
-  DrawText(phase_text, GetScreenWidth() - 200, 50, 20, phase_color);
+  DrawTextEx(game_font, phase_text,
+             (Vector2){(float)(GetScreenWidth() - 220), 50}, 24, 2,
+             phase_color);
 
   if (game->player.phase_system.state == PHASE_STATE_SUPERPOSITION) {
     char super_text[50];
     sprintf(super_text, "GRABANDO ECO: %d",
             game->player.phase_system.superposition_turns_left);
-    DrawText(super_text, GetScreenWidth() - 300, 80, 20, YELLOW);
+    DrawTextEx(game_font, super_text,
+               (Vector2){(float)(GetScreenWidth() - 320), 80}, 24, 2, YELLOW);
 
     if (game->player.is_recording_echo) {
       /* Always show the prompt so user knows it exists */
-      DrawText("PULSA [T] PARA ESPERAR", GetScreenWidth() - 300, 110, 18,
-               (Color){200, 200, 200, 200});
+      DrawTextEx(game_font, "PULSA [T] PARA ESPERAR",
+                 (Vector2){(float)(GetScreenWidth() - 320), 112}, 22, 2,
+                 (Color){200, 200, 200, 200});
 
       if (game->player.recording_frame > 0) {
         EchoAction *last =
             &game->player.current_recording[game->player.recording_frame - 1];
         if (last->action.kind == CMD_WAIT) {
           const char *wait_text = "ESPERANDO... (GRABANDO)";
-          int w = MeasureText(wait_text, 24);
-          DrawText(wait_text, (GetScreenWidth() - w) / 2,
-                   GetScreenHeight() / 2 - 50, 24, (Color){255, 255, 0, 255});
+          Vector2 wsz = MeasureTextEx(game_font, wait_text, 28, 2);
+          DrawTextEx(game_font, wait_text,
+                     (Vector2){(GetScreenWidth() - wsz.x) / 2,
+                               (float)(GetScreenHeight() / 2 - 50)},
+                     28, 2, (Color){255, 255, 0, 255});
         }
       }
     }
@@ -323,23 +403,30 @@ void render_hud(GameState *game) {
 
   if (game->player.dead) {
     const char *death_text = "FUNCION DE ONDA COLAPSADA";
-    int text_width = MeasureText(death_text, 40);
-    DrawText(death_text, GetScreenWidth() / 2 - text_width / 2 + 2,
-             GetScreenHeight() / 2 - 24 + 2, 40, (Color){0, 0, 0, 200});
-    DrawText(death_text, GetScreenWidth() / 2 - text_width / 2,
-             GetScreenHeight() / 2 - 24, 40, PALETTE[12]);
+    Vector2 dtsz = MeasureTextEx(game_font, death_text, 48, 2);
+    DrawTextEx(game_font, death_text,
+               (Vector2){GetScreenWidth() / 2 - dtsz.x / 2 + 2,
+                         (float)(GetScreenHeight() / 2 - 24 + 2)},
+               48, 2, (Color){0, 0, 0, 200});
+    DrawTextEx(game_font, death_text,
+               (Vector2){GetScreenWidth() / 2 - dtsz.x / 2,
+                         (float)(GetScreenHeight() / 2 - 24)},
+               48, 2, PALETTE[12]);
     const char *sub = "PULSA ENTER PARA REINICIAR";
-    int sub_w = MeasureText(sub, 20);
-    DrawText(sub, GetScreenWidth() / 2 - sub_w / 2, GetScreenHeight() / 2 + 35,
-             20, (Color){150, 150, 170, 200});
+    Vector2 ssz = MeasureTextEx(game_font, sub, 24, 2);
+    DrawTextEx(game_font, sub,
+               (Vector2){GetScreenWidth() / 2 - ssz.x / 2,
+                         (float)(GetScreenHeight() / 2 + 40)},
+               24, 2, (Color){150, 150, 170, 200});
   }
 
   /* Level indicator */
   char level_text[32];
   snprintf(level_text, 32, "LEVEL %d / %d", game->current_level + 1,
            MAX_LEVELS);
-  DrawText(level_text, GetScreenWidth() - 200, 110, 18,
-           (Color){120, 140, 180, 200});
+  DrawTextEx(game_font, level_text,
+             (Vector2){(float)(GetScreenWidth() - 220), 145}, 22, 2,
+             (Color){120, 140, 180, 200});
 }
 
 void render_grid_lines(GameState *game) {
@@ -461,8 +548,10 @@ void render_dialog(GameState *game) {
                 PALETTE[18]);
 
   DialogPage *page = &d->pages[d->current_page];
-  int title_w = MeasureText(page->title, 28);
-  DrawText(page->title, (sw - title_w) / 2, box_y + 20, 28, PALETTE[18]);
+  Vector2 tsz = MeasureTextEx(game_font, page->title, 32, 2);
+  DrawTextEx(game_font, page->title,
+             (Vector2){(sw - tsz.x) / 2, (float)(box_y + 18)}, 32, 2,
+             PALETTE[18]);
 
   DrawRectangle(box_x + 30, box_y + 55, box_w - 60, 1,
                 (Color){80, 200, 255, 100});
@@ -473,25 +562,28 @@ void render_dialog(GameState *game) {
   int text_y = box_y + 70;
   char *line = strtok(buf, "\n");
   while (line) {
-    DrawText(line, box_x + 30, text_y, 18, PALETTE[7]);
-    text_y += 24;
+    DrawTextEx(game_font, line, (Vector2){(float)(box_x + 30), (float)text_y},
+               22, 2, PALETTE[7]);
+    text_y += 28;
     line = strtok(NULL, "\n");
   }
 
   char page_text[32];
   snprintf(page_text, 32, "%d / %d", d->current_page + 1, d->page_count);
-  int page_w = MeasureText(page_text, 16);
-  DrawText(page_text, (sw - page_w) / 2, box_y + box_h - 30, 16,
-           (Color){120, 140, 160, 200});
+  Vector2 psz = MeasureTextEx(game_font, page_text, 20, 2);
+  DrawTextEx(game_font, page_text,
+             (Vector2){(sw - psz.x) / 2, (float)(box_y + box_h - 32)}, 20, 2,
+             (Color){120, 140, 160, 200});
 
   float pulse = (sinf((float)GetTime() * 4.0f) + 1.0f) * 0.5f;
   unsigned char alpha = (unsigned char)(150 + pulse * 105);
   const char *prompt = (d->current_page < d->page_count - 1)
                            ? "ENTER to continue >>"
                            : "ENTER to begin >>";
-  int prompt_w = MeasureText(prompt, 18);
-  DrawText(prompt, sw / 2 - prompt_w / 2, box_y + box_h + 15, 18,
-           (Color){80, 200, 255, alpha});
+  Vector2 prsz = MeasureTextEx(game_font, prompt, 22, 2);
+  DrawTextEx(game_font, prompt,
+             (Vector2){sw / 2 - prsz.x / 2, (float)(box_y + box_h + 15)}, 22, 2,
+             (Color){80, 200, 255, alpha});
 }
 
 void render_level_transition(GameState *game) {
@@ -503,13 +595,14 @@ void render_level_transition(GameState *game) {
   DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, (unsigned char)alpha});
 
   if (game->level_transition_timer > 0.5f) {
-    int tw = MeasureText(game->level_name, 36);
+    Vector2 tlsz = MeasureTextEx(game_font, game->level_name, 42, 3);
     unsigned char ta =
         (unsigned char)((game->level_transition_timer - 0.5f) * 2.0f * 255.0f);
     if (ta > 255)
       ta = 255;
-    DrawText(game->level_name, (sw - tw) / 2, sh / 2 - 18, 36,
-             (Color){80, 200, 255, ta});
+    DrawTextEx(game_font, game->level_name,
+               (Vector2){(sw - tlsz.x) / 2, (float)(sh / 2 - 21)}, 42, 3,
+               (Color){80, 200, 255, ta});
   }
 }
 
@@ -519,23 +612,29 @@ void render_win_screen(void) {
   DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 220});
 
   const char *title = "STABILIZATION COMPLETE";
-  int tw = MeasureText(title, 48);
-  DrawText(title, (sw - tw) / 2, sh / 2 - 80, 48, (Color){0, 255, 180, 255});
+  Vector2 wtsz = MeasureTextEx(game_font, title, 56, 3);
+  DrawTextEx(game_font, title,
+             (Vector2){(sw - wtsz.x) / 2, (float)(sh / 2 - 80)}, 56, 3,
+             (Color){0, 255, 180, 255});
 
   const char *sub = "Subject 44's wave function has been stabilized.";
-  int sw2 = MeasureText(sub, 22);
-  DrawText(sub, (sw - sw2) / 2, sh / 2 - 20, 22, (Color){180, 200, 220, 200});
+  Vector2 wssz = MeasureTextEx(game_font, sub, 26, 2);
+  DrawTextEx(game_font, sub, (Vector2){(sw - wssz.x) / 2, (float)(sh / 2 - 20)},
+             26, 2, (Color){180, 200, 220, 200});
 
   const char *credits = "PHASE SHIFT -- Kripta Studios";
-  int cw = MeasureText(credits, 18);
-  DrawText(credits, (sw - cw) / 2, sh / 2 + 40, 18,
-           (Color){100, 140, 180, 150});
+  Vector2 wcsz = MeasureTextEx(game_font, credits, 22, 2);
+  DrawTextEx(game_font, credits,
+             (Vector2){(sw - wcsz.x) / 2, (float)(sh / 2 + 40)}, 22, 2,
+             (Color){100, 140, 180, 150});
 
   float pulse = (sinf((float)GetTime() * 3.0f) + 1.0f) * 0.5f;
   unsigned char a = (unsigned char)(120 + pulse * 135);
   const char *restart = "Press ENTER to restart";
-  int rw = MeasureText(restart, 20);
-  DrawText(restart, (sw - rw) / 2, sh / 2 + 100, 20, (Color){80, 200, 255, a});
+  Vector2 wrsz = MeasureTextEx(game_font, restart, 24, 2);
+  DrawTextEx(game_font, restart,
+             (Vector2){(sw - wrsz.x) / 2, (float)(sh / 2 + 100)}, 24, 2,
+             (Color){80, 200, 255, a});
 }
 
 void render_tunnels(GameState *game) {
@@ -566,7 +665,8 @@ void render_tunnels(GameState *game) {
 
     /* Swirl effect is okay but maybe too subtle? */
     /* Add text label? "ZONE" */
-    DrawText("TUNNEL", pos.x + 5, pos.y + 5, 10, border);
+    DrawTextEx(game_font, "TUNNEL", (Vector2){pos.x + 5, pos.y + 5}, 14, 2,
+               border);
     Vector2 center = {pos.x + size.x * 0.5f, pos.y + size.y * 0.5f};
     float time = (float)GetTime();
     float radius = fminf(size.x, size.y) * 0.4f;

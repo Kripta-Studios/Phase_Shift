@@ -4,6 +4,16 @@
 #include "common.h"
 #include "utils.h"
 
+// Post-processing shader system
+extern Shader post_shader;
+extern RenderTexture2D post_target;
+extern bool post_shader_ready;
+
+void init_post_shader(void);
+void unload_post_shader(void);
+void begin_post_processing(void);
+void end_post_processing(GameState *game);
+
 // Core Rendering
 void render_game_cells(GameState *game);
 void render_grid_lines(GameState *game);
