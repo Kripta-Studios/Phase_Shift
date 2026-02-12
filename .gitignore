@@ -12,3 +12,4 @@ release/
 *.exe
 *.dll
 RELEASE.md
+*.txt
