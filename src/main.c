@@ -166,6 +166,7 @@ int main(void) {
         }
       } else {
         if (check_level_complete(&game)) {
+          PlaySound(level_complete_sound);
           save_game(&game);
           if (game.current_level < MAX_LEVELS - 1) {
             if (game.current_level + 1 > game.highest_level_unlocked) {

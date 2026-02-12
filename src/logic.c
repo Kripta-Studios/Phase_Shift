@@ -776,6 +776,7 @@ void game_player_turn(GameState *game, Direction dir) {
       player->keys--;
       flood_fill(game, new_pos, CELL_FLOOR);
       player->position = new_pos;
+      PlaySound(open_door_sound);
     }
   }
 
@@ -916,6 +917,7 @@ void game_colapsores_turn(GameState *game) {
 
           if (count > 0) {
             colapsor->position = best_moves[rand() % count];
+            PlaySound(guard_step_sound);
           }
 
           colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN;
@@ -1093,6 +1095,7 @@ void execute_turn(GameState *game, Command cmd) {
     game_player_turn(game, cmd.dir);
   } else if (cmd.kind == CMD_PLANT) {
     handle_plant_bomb(game);
+    PlaySound(plant_bomb_sound);
     spawn_spark_effect(game, game->player.position, ORANGE);
   } else if (cmd.kind == CMD_PHASE_CHANGE) {
     handle_phase_change(game);
