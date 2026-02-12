@@ -27,6 +27,7 @@ Sound level_complete_sound;
 Sound guard_step_sound;
 Sound open_door_sound;
 Sound plant_bomb_sound;
+Texture2D title_icon;
 
 IVector2 ivec2(int x, int y) { return (IVector2){x, y}; }
 

@@ -19,6 +19,10 @@ void cleanup_game(GameState *game) {
 
 int main(void) {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+#ifndef DEBUG_MODE
+  SetTraceLogLevel(LOG_NONE);
+#endif
+
   InitWindow(0, 0, "PHASE SHIFT");
   ToggleFullscreen();
   SetTargetFPS(144);
@@ -72,6 +76,8 @@ int main(void) {
 
   init_palette();
   init_post_shader();
+
+  title_icon = LoadTexture("assets/icon.png");
 
   GameState game;
   memset(&game, 0, sizeof(GameState));
@@ -408,6 +414,7 @@ int main(void) {
   UnloadSound(portal_activate_sound);
   UnloadSound(level_complete_sound);
   UnloadMusicStream(ambient_music);
+  UnloadTexture(title_icon);
 
   CloseAudioDevice();
   CloseWindow();

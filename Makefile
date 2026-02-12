@@ -13,20 +13,22 @@ all: $(EXEC)
 # Release target (no debug, copy files, no console)
 release: LDFLAGS += -mwindows
 release: clean
-	$(CC) $(CFLAGS) $(SRC) -o $(EXEC) $(LDFLAGS)
+	windres phase_shift.rc -o phase_shift.o
+	$(CC) $(CFLAGS) $(SRC) phase_shift.o -o $(EXEC) $(LDFLAGS)
 	cmd //C "if not exist release mkdir release"
 	cmd //C "if not exist release\assets mkdir release\assets"
 	cmd //C "copy /Y $(EXEC) release"
 	cmd //C "copy /Y *.dll release"
-	cmd //C "copy /Y icon.png release"
+	cmd //C "copy /Y icon.png release\assets"
 	cmd //C "xcopy /E /I /Y assets release\assets"
 
 $(EXEC): $(OBJ)
-	$(CC) $(OBJ) -o $@ $(LDFLAGS)
+	windres phase_shift.rc -o phase_shift.o
+	$(CC) $(OBJ) phase_shift.o -o $@ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	-cmd //C "del /Q $(subst /,\,$(OBJ)) $(EXEC)"
+	-cmd //C "del /Q $(subst /,\,$(OBJ)) phase_shift.o $(EXEC)"
 

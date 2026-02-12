@@ -422,4 +422,6 @@ extern Sound guard_step_sound;
 extern Sound open_door_sound;
 extern Sound plant_bomb_sound;
 
+extern Texture2D title_icon;
+
 #endif

@@ -721,7 +721,7 @@ void render_win_screen(void) {
   DrawTextEx(game_font, sub, (Vector2){(sw - wssz.x) / 2, (float)(sh / 2 - 20)},
              26, 2, (Color){180, 200, 220, 200});
 
-  const char *credits = "PHASE SHIFT -- Kripta Studios";
+  const char *credits = "PHASE SHIFT -- Kipta-Studios";
   Vector2 wcsz = MeasureTextEx(game_font, credits, 22, 2);
   DrawTextEx(game_font, credits,
              (Vector2){(sw - wcsz.x) / 2, (float)(sh / 2 + 40)}, 22, 2,
@@ -1054,7 +1054,15 @@ void render_main_menu(GameState *game) {
   int reset_w = MeasureText(txt_reset, 20);
   DrawText(txt_reset, center_x - reset_w / 2, start_y + 100, 20, GRAY);
 
-  DrawText("Kripta Studios - 2026", 20, GetScreenHeight() - 40, 20, DARKGRAY);
+  // Icon
+  if (title_icon.id > 0) {
+    float scale = 2.0f;
+    Vector2 icon_pos = {(float)(center_x - title_icon.width * scale / 2),
+                        (float)(start_y + 140)};
+    DrawTextureEx(title_icon, icon_pos, 0.0f, scale, WHITE);
+  }
+
+  DrawText("Kripta-Studios - 2026", 20, GetScreenHeight() - 40, 20, DARKGRAY);
 }
 
 void render_pause_menu(GameState *game) {

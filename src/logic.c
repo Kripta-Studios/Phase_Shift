@@ -548,7 +548,7 @@ void update_quantum_detectors(GameState *game) {
       player->phase_system.current_phase = det->detects_phase;
       player->phase_system.state = PHASE_STATE_STABLE;
       player->phase_system.phase_lock_turns = 5;
-      player->coherence.current -= 15.0f;
+      player->coherence.current -= 40.0f;
 
       det->beam_alpha = 1.0f;
     } else {
