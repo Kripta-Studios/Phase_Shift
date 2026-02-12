@@ -390,6 +390,9 @@ typedef struct {
   // Flashlight
   bool flashlight_active;
   float flashlight_angle;
+
+  // Level transition: deferred next level loading
+  int pending_next_level; // -1 = none, >=0 = level to load after transition
 } GameState;
 
 // Global Externs
@@ -415,5 +418,8 @@ extern Sound mirror_reflect_sound;
 extern Sound decoherence_sound;
 extern Sound portal_activate_sound;
 extern Sound level_complete_sound;
+extern Sound guard_step_sound;
+extern Sound open_door_sound;
+extern Sound plant_bomb_sound;
 
 #endif

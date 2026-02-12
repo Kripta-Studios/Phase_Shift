@@ -24,6 +24,9 @@ Sound mirror_reflect_sound;
 Sound decoherence_sound;
 Sound portal_activate_sound;
 Sound level_complete_sound;
+Sound guard_step_sound;
+Sound open_door_sound;
+Sound plant_bomb_sound;
 
 IVector2 ivec2(int x, int y) { return (IVector2){x, y}; }
 

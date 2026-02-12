@@ -11,8 +11,10 @@ eepers.app
 
 .idea
 .DS_Store
-
+release/
 # C artifacts
 *.obj
 eepers_c
 eepers_c.exe
+*.exe
+*.dll

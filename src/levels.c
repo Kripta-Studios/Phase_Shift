@@ -869,7 +869,7 @@ void show_level_dialog(GameState *game) {
             "ESTRATEGIA:\n"
             "1. Pisa el BOTON para abrir el muro\n"
             "2. Un GUARDIA patrulla al otro lado\n"
-            "3. Usa una BOMBA [B] para eliminarlo\n"
+            "3. Usa una BOMBA [X] para eliminarlo\n"
             "4. Recoge la LLAVE y abre la PUERTA\n\n"
             "Tienes bombas disponibles.",
             MAX_DIALOG_TEXT);
@@ -912,7 +912,7 @@ void show_level_dialog(GameState *game) {
             "2. Pisa boton 1, activa SUPERPOSICION\n"
             "3. Corre al boton 2 (5 casillas)\n"
             "4. La barricada se abrira\n"
-            "5. Elimina al guardia con BOMBA [B]\n"
+            "5. Elimina al guardia con BOMBA [X]\n"
             "6. Recoge LLAVE y abre PUERTA.\n\n"
             "Usa todo lo que has aprendido!",
             MAX_DIALOG_TEXT);

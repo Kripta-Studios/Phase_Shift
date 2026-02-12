@@ -37,6 +37,33 @@ int main(void) {
   checkpoint_sound = LoadSound("assets/sounds/checkpoint.ogg");
   phase_shift_sound = LoadSound("assets/sounds/popup-show.wav");
 
+  /* Load all remaining sound assets */
+  guard_step_sound = LoadSound("assets/sounds/guard-step.ogg");
+  open_door_sound = LoadSound("assets/sounds/open-door.wav");
+  plant_bomb_sound = LoadSound("assets/sounds/plant-bomb.wav");
+
+  /* Map unloaded externs to existing sound files */
+  teleport_sound = LoadSound("assets/sounds/popup-show.wav");
+  SetSoundPitch(teleport_sound, 1.3f);
+  measurement_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  SetSoundPitch(measurement_sound, 0.8f);
+  entangle_sound = LoadSound("assets/sounds/popup-show.wav");
+  SetSoundPitch(entangle_sound, 0.7f);
+  qubit_rotate_sound = LoadSound("assets/sounds/popup-show.wav");
+  SetSoundPitch(qubit_rotate_sound, 1.5f);
+  oracle_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  SetSoundPitch(oracle_sound, 1.2f);
+  ice_slide_sound = LoadSound("assets/sounds/guard-step.ogg");
+  SetSoundPitch(ice_slide_sound, 1.4f);
+  mirror_reflect_sound = LoadSound("assets/sounds/blast.ogg");
+  SetSoundPitch(mirror_reflect_sound, 1.8f);
+  decoherence_sound = LoadSound("assets/sounds/blast.ogg");
+  SetSoundPitch(decoherence_sound, 0.6f);
+  portal_activate_sound = LoadSound("assets/sounds/popup-show.wav");
+  SetSoundPitch(portal_activate_sound, 0.9f);
+  level_complete_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  SetSoundPitch(level_complete_sound, 1.1f);
+
   ambient_music = LoadMusicStream("assets/sounds/ambient.wav");
   PlayMusicStream(ambient_music);
   SetMusicVolume(ambient_music, 1.0f);
@@ -48,6 +75,7 @@ int main(void) {
 
   GameState game;
   memset(&game, 0, sizeof(GameState));
+  game.pending_next_level = -1;
 
   game.state_kind = GAME_STATE_MAIN_MENU;
   init_encyclopedia(&game);
@@ -97,7 +125,6 @@ int main(void) {
       game.level_transition_timer -= dt * 0.5f;
       if (game.level_transition_timer < 0.0f) {
         game.level_transition_timer = 0.0f;
-        game.state_kind = GAME_STATE_PLAYING;
       }
     }
 
@@ -139,16 +166,14 @@ int main(void) {
         }
       } else {
         if (check_level_complete(&game)) {
-          game.state_kind = GAME_STATE_LEVEL_TRANSITION;
-          game.level_transition_timer = 1.0f;
           save_game(&game);
           if (game.current_level < MAX_LEVELS - 1) {
             if (game.current_level + 1 > game.highest_level_unlocked) {
               game.highest_level_unlocked = game.current_level + 1;
             }
-            load_level(&game, game.current_level + 1);
-            show_level_dialog(&game);
-            game.state_kind = GAME_STATE_DIALOG;
+            game.pending_next_level = game.current_level + 1;
+            game.state_kind = GAME_STATE_LEVEL_TRANSITION;
+            game.level_transition_timer = 1.0f;
           } else {
             game.state_kind = GAME_STATE_WIN;
           }
@@ -216,26 +241,26 @@ int main(void) {
             }
           }
 
-#ifdef DEBUG_MODE
-          if (IsKeyPressed(KEY_F5)) {
-            if (game.current_level + 1 > game.highest_level_unlocked) {
-              game.highest_level_unlocked = game.current_level + 1;
-            }
-            game.current_level++;
-            if (game.current_level >= MAX_LEVELS) {
-              game.state_kind = GAME_STATE_WIN;
-            } else {
-              load_level(&game, game.current_level);
-              show_level_dialog(&game);
-              game.state_kind = GAME_STATE_DIALOG;
-            }
-          }
-#endif
-
           if (input && !game.encyclopedia_active) {
             execute_turn(&game, cmd);
           }
         }
+
+#ifdef DEBUG_MODE
+        if (IsKeyPressed(KEY_F5)) {
+          if (game.current_level + 1 > game.highest_level_unlocked) {
+            game.highest_level_unlocked = game.current_level + 1;
+          }
+          int next = game.current_level + 1;
+          if (next >= MAX_LEVELS) {
+            game.state_kind = GAME_STATE_WIN;
+          } else {
+            load_level(&game, next);
+            show_level_dialog(&game);
+            game.state_kind = GAME_STATE_DIALOG;
+          }
+        }
+#endif
       }
       break;
     }
@@ -255,7 +280,20 @@ int main(void) {
       break;
     }
 
-    case GAME_STATE_LEVEL_TRANSITION:
+    case GAME_STATE_LEVEL_TRANSITION: {
+      if (IsKeyPressed(KEY_ENTER)) {
+        if (game.pending_next_level >= 0) {
+          int next = game.pending_next_level;
+          game.pending_next_level = -1;
+          load_level(&game, next);
+          show_level_dialog(&game);
+          game.state_kind = GAME_STATE_DIALOG;
+        } else {
+          game.state_kind = GAME_STATE_PLAYING;
+        }
+      }
+      break;
+    }
     default:
       break;
     }
@@ -355,6 +393,19 @@ int main(void) {
   UnloadSound(bomb_pickup_sound);
   UnloadSound(checkpoint_sound);
   UnloadSound(phase_shift_sound);
+  UnloadSound(guard_step_sound);
+  UnloadSound(open_door_sound);
+  UnloadSound(plant_bomb_sound);
+  UnloadSound(teleport_sound);
+  UnloadSound(measurement_sound);
+  UnloadSound(entangle_sound);
+  UnloadSound(qubit_rotate_sound);
+  UnloadSound(oracle_sound);
+  UnloadSound(ice_slide_sound);
+  UnloadSound(mirror_reflect_sound);
+  UnloadSound(decoherence_sound);
+  UnloadSound(portal_activate_sound);
+  UnloadSound(level_complete_sound);
   UnloadMusicStream(ambient_music);
 
   CloseAudioDevice();
