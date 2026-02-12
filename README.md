@@ -8,6 +8,8 @@
 
 **Phase Shift** es un juego de puzzles 2D basado en mecánicas cuánticas reales. Eres el **Sujeto 44**, un científico atrapado en un experimento cuántico fallido. Tu conciencia existe en múltiples fases de la realidad simultáneamente. Completa **15 niveles** de puzzles cuánticos antes de que tu coherencia cuántica colapse permanentemente.
 
+Las probabilidades cuánticas del juego (túneles cuánticos, superposición) se calculan mediante un servidor ejecutando **IBM Qiskit**, conectando la jugabilidad con circuitos cuánticos reales.
+
 Desarrollado por **Kripta Studios** · Motor: [Raylib](https://www.raylib.com/) · Lenguaje: C99
 
 ---
@@ -21,13 +23,11 @@ Desarrollado por **Kripta Studios** · Motor: [Raylib](https://www.raylib.com/) 
 | `ESPACIO` | Activar Superposición / Crear Eco |
 | `X` o `SHIFT IZQ` | Plantar bomba |
 | `T` o `.` | Esperar (pasar turno sin moverse) |
-| `E` | Entrelazarse con un Colapsor cercano |
+| `E` | Interactuar (Portales / Entrelazamiento) |
 | `H` | Enciclopedia cuántica |
 | `ENTER` | Avanzar diálogos / Reintentar nivel |
 | `ESC` | Menú de pausa |
 | `=` / `-` | Zoom in / out |
-| `F11` | Pantalla completa |
-| `F5` | Saltar nivel (debug) |
 
 ---
 
@@ -56,6 +56,8 @@ Activa la superposición para crear un **Eco Cuántico**:
 4. **Muévete** hacia tu objetivo mientras la grabación se registra
 5. El **Eco** aparece y repite tus acciones en bucle
 
+> La probabilidad de éxito de la superposición se calcula mediante circuitos de **Qiskit**.
+
 ### 3. Detectores Cuánticos
 
 Láseres que solo detectan UNA fase:
@@ -73,13 +75,13 @@ Celdas brillantes que te teletransportan:
 ### 5. Túneles Cuánticos
 
 Zonas púrpuras que te permiten atravesar muros:
-- **50%** de probabilidad de éxito
+- **50%** de probabilidad de éxito (calculada via Qiskit)
 - Si fallas: turnos atrapado + pérdida de coherencia
 - Solo funciona al activar superposición en la zona
 
 ### 6. Entrelazamiento (`E`)
 
-Púlsa `E` cerca de un Colapsor (enemigo) para entrelazarte:
+Pulsa `E` cerca de un Colapsor (enemigo) para entrelazarte:
 - Tu movimiento se transfiere al enemigo entrelazado
 - El enemigo se mueve **igual que tú**
 - Útil para posicionar enemigos sobre botones
@@ -102,114 +104,63 @@ Púlsa `E` cerca de un Colapsor (enemigo) para entrelazarte:
 ### Nivel 1 — INTERFERENCIA
 **Concepto:** Introducción al cambio de fase
 
-Muros rojos y azules forman un patrón de interferencia. Cambia de fase con `Z` para atravesar los muros del color opuesto. Recoge la llave en el centro, abre la puerta y llega a la salida.
-
-**Solución:**
-1. Empieza en fase ROJA → atraviesa muros AZULES
-2. Cambia a AZUL con `Z` → atraviesa muros ROJOS
-3. Recoge la llave en (10, centro)
-4. Ve a la puerta (col 17) y sal por (col 18)
+Muros rojos y azules forman un patrón de interferencia. Cambia de fase con `Z` para atravesar los muros del color opuesto. Recoge la llave, abre la puerta y llega a la salida.
 
 ---
 
 ### Nivel 2 — ZIGZAG DE FASE
 **Concepto:** Cambio de fase obligatorio en zigzag
 
-Tres barreras verticales de fase (ROJA → AZUL → ROJA) con aperturas en extremos opuestos fuerzan un recorrido en zigzag.
-
-**Solución:**
-1. Fase AZUL → cruza barrera ROJA por apertura inferior (col 5)
-2. Fase ROJA → sube y cruza barrera AZUL por apertura superior (col 10)
-3. Fase AZUL → cruza barrera ROJA final por abajo (col 15)
-4. Recoge la llave en (12, 3), abre la puerta y sal
+Tres barreras verticales de fase (ROJA → AZUL → ROJA) con aperturas en extremos opuestos fuerzan un recorrido en zigzag. La salida está protegida por muros de fase.
 
 ---
 
 ### Nivel 3 — PARADOJA TEMPORAL
 **Concepto:** Uso de Ecos Cuánticos para abrir barreras
 
-Tres cámaras separadas por barricadas. Cada barricada se abre con un botón. Necesitas Ecos para mantener botones pulsados.
+Dos botones ROJOS cercanos deben pulsarse simultáneamente para abrir la barricada. Usa un Eco para mantener un botón mientras pisas el otro.
 
 **Solución:**
-1. Ve al botón ROJO (4, centro-3)
+1. Ve al botón de ARRIBA en fase ROJA
 2. Pulsa `ESPACIO` para iniciar grabación del Eco
-3. Espera con `T` varios turnos
-4. Corre hacia el segundo botón. Tu Eco mantiene el primero
-5. Repite para el tercer botón si es necesario
-6. Alternativa: usa bombas (`X`) para romper barricadas
+3. Espera con `T` 3-4 turnos
+4. Corre al botón de ABAJO. Tu Eco mantiene el primero
+5. Alternativa: usa bombas (`X`) para romper barricadas
 
 ---
 
 ### Nivel 4 — COMPUERTA HADAMARD
 **Concepto:** Dos botones simultáneos con Eco
 
-Forma de "H" con muros de fase. Dos botones (ROJO arriba, AZUL abajo) deben pulsarse a la vez para abrir la barricada.
-
-**Solución:**
-1. Recoge la llave en (10, 3)
-2. Ve al botón de ARRIBA (15, 4)
-3. Pulsa `ESPACIO` para crear Eco
-4. Espera `T` 3-4 turnos
-5. Corre al botón de ABAJO (15, rows-5)
-6. Tu Eco mantiene el botón superior → barricada se abre
-7. Abre la puerta con la llave y sal
+Forma de "H" con muros de fase. Dos botones deben pulsarse a la vez para abrir la barricada.
 
 ---
 
-### Nivel 5 — GROVER (EXTREMO)
+### Nivel 5 — GROVER
 **Concepto:** Búsqueda cuántica en laberinto con guardias
 
-Laberinto denso con muros verticales, detectores y dos guardias. La llave está en el rincón más peligroso.
-
-**Solución:**
-1. Cambia de fase para cruzar aperturas de color (ROJA en col 5, AZUL en col 10...)
-2. Evita detectores estando en la fase OPUESTA a la del detector
-3. Recoge la bomba en (2, rows-2) para emergencias
-4. Los guardias persiguen: muévete rápido o usa bombas
-5. La llave está en (22, 2). La salida en (22, centro)
+Laberinto denso con muros verticales, detectores y guardias. Cambia de fase para cruzar aperturas de color y evita detectores con la fase opuesta.
 
 ---
 
-### Nivel 6 — TELETRANSPORTE (EXTREMO)
+### Nivel 6 — TELETRANSPORTE
 **Concepto:** Túneles cuánticos entre zonas aisladas
 
 Tres zonas separadas por muros dobles. Solo los túneles cuánticos (zonas púrpuras) conectan las zonas.
 
-**Solución:**
-1. En la zona 1, ve al Túnel (7, 4) → activa superposición
-2. **Cuidado**: un guardia espera en la zona 2
-3. Recoge la llave en (14, rows-2) de la zona 2
-4. Usa el Túnel 2 (16, 6) para llegar a la zona 3
-5. El botón rojo en (14, 2) abre barricadas entre zonas 2-3
-6. Abre la puerta con la llave y llega a la salida
-
 ---
 
-### Nivel 7 — CORRECCIÓN DE ERRORES (EXTREMO)
+### Nivel 7 — CORRECCIÓN DE ERRORES
 **Concepto:** Tres corredores con diferentes peligros
 
 Tres corredores paralelos, cada uno con un tipo de "ruido" cuántico diferente.
 
-**Solución:**
-1. **Corredor SUPERIOR**: Muros de fase rojos + guardia al final. Cambia a AZUL para cruzar, luego evita al guardia
-2. **Corredor MEDIO**: Guardia + detector azul. Usa fase ROJA para evitar detector
-3. **Corredor INFERIOR**: Detectores cruzados rojo/azul. Cambia fase rápidamente para esquivar
-4. El botón en el corredor superior (cols-6, 3) abre la barrera final
-5. Recoge coherencia en (6, 8) y (18, 14) por el camino
-
 ---
 
-### Nivel 8 — BOSS RUSH
+### Nivel 8 — SUPREMACÍA
 **Concepto:** Todas las mecánicas combinadas en 3 zonas
 
-Mapa grande con tres zonas: laberinto de fase, kill box con detectores, y escape con túnel.
-
-**Solución:**
-1. **ZONA 1**: Cruza el laberinto de fase alternando con `Z`, esquiva al guardia
-2. **ZONA 2**: Usa Eco en un botón (16, centro-4), corre al otro (16, centro+4). Los detectores cubren el centro: cambia fase constantemente
-3. Ambos botones abren la barricada a la zona 3
-4. **ZONA 3**: Usa el túnel (24, 6) para atravesar el muro final
-5. Recoge la llave en (28, 7), abre puerta en (col 27), elimina al guardia si es necesario con bombas
+Mapa grande con tres zonas: laberinto de fase, detectores y botones, y escape con túnel.
 
 ---
 
@@ -218,100 +169,57 @@ Mapa grande con tres zonas: laberinto de fase, kill box con detectores, y escape
 
 La salida está bloqueada por muros VERDES. Dos botones deben pulsarse simultáneamente.
 
-**Solución:**
-1. Recoge el **Desbloqueo de Fase Verde** en (12, 8)
-2. Ve al primer botón (4, 4)
-3. Pulsa `ESPACIO` para crear Eco
-4. Espera `T` turnos y corre al segundo botón (4, rows-4)
-5. Ambos botones pulsados → muros VERDES en col 18 se abren
-6. Cambia a fase VERDE con `Z` si hace falta
-7. Cruza y llega a la salida en (22, centro)
-
 ---
 
 ### Nivel 10 — TELEPORTACIÓN
 **Concepto:** Portales cuánticos con fase requerida
 
-🔑 **CLAVE**: Cada portal requiere estar en su **misma fase** para activarse.
-
 Tres islas separadas por muros. Los portales cuánticos son la ÚNICA forma de moverse entre islas.
 
-**Solución:**
-1. Empiezas en la Isla 1 (cols 1-7), fase ROJA
-2. El portal ROJO está en (4, centro). Pisa el portal → te teletransporta a la Isla 2
-3. En la Isla 2 (cols 9-17), recoge la **LLAVE** en (13, rows-4)
-4. Cambia a fase **AZUL** con `Z`
-5. El portal AZUL está en (13, 4). Pisa → te teletransporta a la Isla 3
-6. En la Isla 3 (cols 19-26), abre la **PUERTA** en col 24 con la llave
-7. Llega a la **SALIDA** en (25, centro)
+---
 
-> Si necesitas volver, el portal VERDE en (22, centro) te devuelve a la Isla 1 (cambia a fase VERDE primero).
+### Nivel 11 — LABERINTO DE FASE
+**Concepto:** Muros ROJOS y AZULES en laberinto
+
+Cambia de FASE para atravesar muros. Evita al guardia del centro. Recoge la LLAVE y abre la PUERTA.
 
 ---
 
-### Nivel 11 — DEUTSCH-JOZSA
-**Concepto:** Oráculo y detector con espejos
+### Nivel 12 — ECO Y GUARDIA
+**Concepto:** Botones con guardias y bombas
 
-Un oráculo esconde una propiedad. Usa el detector azul y los espejos para interrogarlo.
-
-**Solución:**
-1. Activa el botón ROJO para eliminar obstrucciones de fase
-2. Usa los espejos para redirigir el haz del detector hacia el oráculo
-3. El oráculo revela su estado al ser "medido"
-4. Navega hasta la salida usando la información obtenida
+Un muro de barricadas bloquea el paso. El botón abre la barricada. Un guardia patrulla al otro lado.
 
 ---
 
-### Nivel 12 — SHOR: BÚSQUEDA DE PERÍODO
-**Concepto:** Patrones repetitivos con guardias entrelazables
+### Nivel 13 — DOS BOTONES
+**Concepto:** Eco para botones simultáneos
 
-Tres guardias se mueven en ciclo. Usa el entrelazamiento para romper sus patrones.
-
-**Solución:**
-1. Observa el patrón de movimiento de los guardias
-2. Acércate a un guardia y pulsa `E` para entrelazarte
-3. Tu movimiento se transfiere al guardia entrelazado
-4. Posiciona guardias fuera de tu camino
-5. Llega a la salida en el borde derecho
+Dos botones deben pulsarse A LA VEZ para abrir la barricada. Usa superposición y eco.
 
 ---
 
-### Nivel 13 — ENTRELAZAMIENTO MASIVO
-**Concepto:** Tres botones con múltiples entidades
+### Nivel 14 — PORTALES Y FASE
+**Concepto:** Portales entre secciones con fase requerida
 
-Tres interruptores deben activarse. Entrelaza múltiples entidades para coordinar.
-
-**Solución:**
-1. Entrelázate con los colapsores usando `E`
-2. Muévete para posicionar a los colapsores sobre botones
-3. Los tres botones pulsados simultáneamente abren la salida
-4. El movimiento de uno afecta a todos los entrelazados
+Tres secciones conectadas por portales. Necesitas la llave de la sección 2.
 
 ---
 
-### Nivel 14 — INTERFEROMETRÍA CUÁNTICA
-**Concepto:** Dos caminos, dos activadores con superposición
+### Nivel 15 — PRUEBA FINAL
+**Concepto:** Prueba final — todas las mecánicas combinadas
 
-La dualidad es tu herramienta. Dos botones en caminos separados.
-
-**Solución:**
-1. Usa superposición `ESPACIO` para crear un Eco
-2. El Eco recorre un camino mientras tú recorres el otro
-3. Ambos activadores pulsados a la vez abren la salida
-4. Colápsa la función de onda en el objetivo
+Combina muros de fase, botones, guardias y ecos. Usa todo lo que has aprendido.
 
 ---
 
-### Nivel 15 — SUPREMACÍA CUÁNTICA
-**Concepto:** Prueba final — todas las mecánicas
+## 🔧 Integración con Qiskit
 
-Combina entrelazamiento, superposición, fases, zonas de decoherencia y oráculos.
+Phase Shift utiliza un servidor backend ejecutando **IBM Qiskit** para calcular probabilidades cuánticas reales. Los siguientes elementos del juego están conectados con circuitos cuánticos:
 
-**Solución:**
-1. Despeja el camino usando bombas y cambio de fase
-2. Evita las zonas de decoherencia (pérdida rápida de coherencia)
-3. Usa entrelazamiento y ecos para resolver puzzles de botones
-4. Consulta al oráculo final para abrir la salida
+- **Túneles Cuánticos**: La probabilidad de traversar un muro se calcula mediante un circuito Hadamard + medición
+- **Superposición**: La dualidad onda-partícula se simula con qubits reales
+- **Decoherencia**: La pérdida de coherencia sigue modelos de ruido cuántico
 
 ---
 
@@ -329,10 +237,10 @@ Combina entrelazamiento, superposición, fases, zonas de decoherencia y oráculo
 # Con Make (recomendado)
 make clean
 make
-./eepers_v2.exe
+./phase_shift.exe
 
 # Manualmente (Windows MinGW)
-gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o eepers_v2.exe \
+gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o phase_shift.exe \
   src/main.c src/utils.c src/logic.c src/render.c src/levels.c \
   src/menus.c src/persistence.c src/atmosphere.c src/quantum.c \
   -lraylib -lopengl32 -lgdi32 -lwinmm
@@ -355,26 +263,13 @@ gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o eepers_v2.exe \
 | `src/atmosphere.c/h` | Estrellas, átomos decorativos |
 | `src/quantum.c/h` | Qubits, puertas cuánticas, portales |
 
-### Estructuras de Datos
-
-| Struct | Propósito |
-|--------|-----------|
-| `GameState` | Estado global: mapa, jugador, colapsores, items |
-| `PlayerState` | Posición, fase, coherencia, eco, qubits |
-| `ColapsarState` | Enemigos con IA, pathfinding BFS |
-| `QuantumPortal` | Portales con fase y enlace |
-| `QuantumDetector` | Detectores con dirección y fase |
-| `PressureButton` | Botones de presión por fase |
-| `DialogSystem` | Diálogos con páginas |
-
 ---
 
 ## 🎵 Créditos
 
 - **Motor**: [Raylib](https://www.raylib.com/) by Ramon Santamaria
 - **Música**: Type 42 — [SoundCloud](https://soundcloud.com/type42) · [YouTube](https://www.youtube.com/@Type42) · [Bandcamp](https://type42.bandcamp.com/)
-- **Concepto original**: Basado en [eepers](https://github.com/tsoding/eepers) por Tsoding
-- **Port a C + Phase Shift**: Kripta Studios
+- **Desarrollo**: Kripta Studios
 
 ---
 

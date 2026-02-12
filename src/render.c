@@ -1025,12 +1025,12 @@ void render_main_menu(GameState *game) {
   render_atmosphere_bg(game);
 
   // Title
-  const char *title = "colapsores: QUANTUM PARADOX";
+  const char *title = "PHASE SHIFT";
   int title_w = MeasureText(title, 60);
   DrawText(title, (GetScreenWidth() - title_w) / 2, 200, 60, RAYWHITE);
 
   // Subtitle
-  const char *sub = "Phase Shift Expansion";
+  const char *sub = "Quantum Puzzle Game";
   int sub_w = MeasureText(sub, 30);
   DrawText(sub, (GetScreenWidth() - sub_w) / 2, 270, 30, SKYBLUE);
 

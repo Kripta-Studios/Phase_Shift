@@ -695,7 +695,8 @@ void init_intro_dialogs(GameState *game) {
           "Pulsa [ESPACIO] para entrar en SUPERPOSICION.\n\n"
           "Esto divide tu linea temporal, creando un\n"
           "ECO temporal que repite tus acciones.\n\n"
-          "Usa Ecos para resolver puzzles.",
+          "Las probabilidades cuanticas se calculan\n"
+          "en un servidor ejecutando IBM Qiskit.",
           MAX_DIALOG_TEXT);
 
   strncpy(d->pages[3].title, "ENTIDADES", 64);
@@ -709,6 +710,10 @@ void init_intro_dialogs(GameState *game) {
   strncpy(d->pages[4].text,
           "Vigila tu medidor de COHERENCIA.\n"
           "Si llega al 0%, te disolveras.\n\n"
+          "NOTA TECNICA:\n"
+          "Los tuneles cuanticos y la superposicion\n"
+          "usan circuitos reales de Qiskit para\n"
+          "determinar probabilidades de exito.\n\n"
           "Buena suerte.",
           MAX_DIALOG_TEXT);
 }
