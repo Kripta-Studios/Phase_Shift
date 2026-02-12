@@ -9,6 +9,19 @@ bool post_shader_ready = false;
 static int loc_time = -1;
 static int loc_resolution = -1;
 
+// Interference Shader
+Shader interference_shader = {0};
+static int loc_int_time = -1;
+static int loc_int_res = -1;
+
+void init_interference_shader(void) {
+  interference_shader = LoadShader(0, "assets/shaders/interference.fs");
+  if (interference_shader.id > 0) {
+    loc_int_time = GetShaderLocation(interference_shader, "time");
+    loc_int_res = GetShaderLocation(interference_shader, "resolution");
+  }
+}
+
 void init_post_shader(void) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
@@ -27,6 +40,9 @@ void init_post_shader(void) {
   } else {
     post_shader_ready = false;
   }
+
+  // Load Interference Shader
+  init_interference_shader();
 }
 
 void unload_post_shader(void) {
@@ -34,6 +50,9 @@ void unload_post_shader(void) {
     UnloadShader(post_shader);
     UnloadRenderTexture(post_target);
     post_shader_ready = false;
+  }
+  if (interference_shader.id > 0) {
+    UnloadShader(interference_shader);
   }
 }
 
@@ -115,6 +134,68 @@ void render_game_cells(GameState *game) {
       Cell cell = game->map->data[y][x];
       Color color = get_cell_color(cell, phase, in_superposition);
       DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE}, color);
+
+      /* Overlay for special cells */
+      if (cell == CELL_ICE) {
+        DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE},
+                       (Color){0, 255, 255, 50});
+        DrawLine(pos.x, pos.y, pos.x + CELL_SIZE, pos.y + CELL_SIZE,
+                 (Color){200, 255, 255, 100});
+      } else if (cell == CELL_MIRROR) {
+        DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE},
+                       (Color){200, 200, 220, 255});
+        DrawLineEx((Vector2){pos.x, pos.y + CELL_SIZE},
+                   (Vector2){pos.x + CELL_SIZE, pos.y}, 3.0f, WHITE);
+        DrawLineEx((Vector2){pos.x, pos.y + CELL_SIZE},
+                   (Vector2){pos.x + CELL_SIZE, pos.y}, 1.0f,
+                   (Color){0, 0, 0, 100});
+      } else if (cell >= CELL_ONEWAY_UP && cell <= CELL_ONEWAY_RIGHT) {
+        Vector2 center = {pos.x + CELL_SIZE * 0.5f, pos.y + CELL_SIZE * 0.5f};
+        Color arrow_col = (Color){255, 255, 255, 150};
+        float offset = CELL_SIZE * 0.25f;
+
+        if (cell == CELL_ONEWAY_UP) {
+          DrawTriangle((Vector2){center.x, center.y - offset},
+                       (Vector2){center.x - offset / 2, center.y + offset},
+                       (Vector2){center.x + offset / 2, center.y + offset},
+                       arrow_col);
+        } else if (cell == CELL_ONEWAY_DOWN) {
+          DrawTriangle((Vector2){center.x, center.y + offset},
+                       (Vector2){center.x + offset / 2, center.y - offset},
+                       (Vector2){center.x - offset / 2, center.y - offset},
+                       arrow_col);
+        } else if (cell == CELL_ONEWAY_LEFT) {
+          DrawTriangle((Vector2){center.x - offset, center.y},
+                       (Vector2){center.x + offset, center.y + offset / 2},
+                       (Vector2){center.x + offset, center.y - offset / 2},
+                       arrow_col);
+        } else if (cell == CELL_ONEWAY_RIGHT) {
+          DrawTriangle((Vector2){center.x + offset, center.y},
+                       (Vector2){center.x - offset, center.y - offset / 2},
+                       (Vector2){center.x - offset, center.y + offset / 2},
+                       arrow_col);
+        }
+      } else if (cell == CELL_DECOHERENCE_ZONE) {
+        // Purple semi-transparent overlay with random noise in future?
+        DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE},
+                       Fade(PURPLE, 0.3f));
+        // Draw some "static" lines/points
+        for (int i = 0; i < 3; i++) {
+          int offX = rand() % (int)CELL_SIZE;
+          int offY = rand() % (int)CELL_SIZE;
+          DrawPixel(pos.x + offX, pos.y + offY, PURPLE);
+        }
+      } else if (cell == CELL_MEASUREMENT_ZONE) {
+        // White grid or eye
+        DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE}, Fade(WHITE, 0.1f));
+        DrawRectangleLines(pos.x + 4, pos.y + 4, CELL_SIZE - 8, CELL_SIZE - 8,
+                           Fade(WHITE, 0.5f));
+        // Eye symbol
+        DrawCircle(pos.x + CELL_SIZE / 2, pos.y + CELL_SIZE / 2, CELL_SIZE / 4,
+                   Fade(BLACK, 0.5f));
+        DrawCircle(pos.x + CELL_SIZE / 2, pos.y + CELL_SIZE / 2, CELL_SIZE / 6,
+                   WHITE);
+      }
     }
   }
 }
@@ -173,38 +254,39 @@ void render_player(GameState *game) {
             game->player.eyes);
 }
 
-void render_eepers(GameState *game) {
-  for (int i = 0; i < MAX_EEPERS; i++) {
-    EeperState *eeper = &game->eepers[i];
-    if (eeper->dead)
+void render_colapsores(GameState *game) {
+  for (int i = 0; i < MAX_COLAPSORES; i++) {
+    ColapsarState *colapsor = &game->colapsores[i];
+    if (colapsor->dead)
       continue;
 
     Vector2 pos;
     if (game->turn_animation > 0.0f) {
-      pos = interpolate_positions(eeper->prev_position, eeper->position,
+      pos = interpolate_positions(colapsor->prev_position, colapsor->position,
                                   game->turn_animation);
     } else {
-      pos = vec2_scale(ivec2_to_vec2(eeper->position), CELL_SIZE);
+      pos = vec2_scale(ivec2_to_vec2(colapsor->position), CELL_SIZE);
     }
 
-    Vector2 size = vec2_scale(ivec2_to_vec2(eeper->size), CELL_SIZE);
+    Vector2 size = vec2_scale(ivec2_to_vec2(colapsor->size), CELL_SIZE);
 
-    switch (eeper->kind) {
-    case EEPER_GUARD:
+    switch (colapsor->kind) {
+    case COLAPSOR_GUARD:
       DrawRectangleV(pos, size, PALETTE[8]);
-      if (eeper->health < 1.0f) {
+      if (colapsor->health < 1.0f) {
         Vector2 health_bar_pos = {pos.x, pos.y - 15.0f};
-        DrawRectangleV(health_bar_pos, (Vector2){size.x * eeper->health, 10.0f},
+        DrawRectangleV(health_bar_pos,
+                       (Vector2){size.x * colapsor->health, 10.0f},
                        PALETTE[12]);
       }
-      draw_eyes(pos, size, eeper->eyes_angle, eeper->eyes);
+      draw_eyes(pos, size, colapsor->eyes_angle, colapsor->eyes);
       break;
-    case EEPER_GNOME: {
+    case COLAPSOR_GNOME: {
       Vector2 gnome_size = {size.x * 0.7f, size.y * 0.7f};
       Vector2 gnome_pos = {pos.x + (size.x - gnome_size.x) * 0.5f,
                            pos.y + (size.y - gnome_size.y) * 0.5f};
       DrawRectangleV(gnome_pos, gnome_size, PALETTE[9]);
-      draw_eyes(gnome_pos, gnome_size, eeper->eyes_angle, eeper->eyes);
+      draw_eyes(gnome_pos, gnome_size, colapsor->eyes_angle, colapsor->eyes);
       break;
     }
     default:
@@ -231,6 +313,15 @@ void render_bombs(GameState *game) {
 }
 
 void render_quantum_effects(GameState *game) {
+  float time = (float)GetTime();
+
+  if (interference_shader.id > 0) {
+    float res[2] = {(float)GetScreenWidth(), (float)GetScreenHeight()};
+    SetShaderValue(interference_shader, loc_int_time, &time,
+                   SHADER_UNIFORM_FLOAT);
+    SetShaderValue(interference_shader, loc_int_res, res, SHADER_UNIFORM_VEC2);
+    BeginShaderMode(interference_shader);
+  }
   for (int i = 0; i < MAX_ECHOS; i++) {
     QuantumEcho *echo = &game->echos[i];
     if (!echo->active)
@@ -270,44 +361,49 @@ void render_quantum_effects(GameState *game) {
     }
   }
 
+  /* Draw Beams */
   for (int i = 0; i < MAX_DETECTORS; i++) {
     QuantumDetector *det = &game->detectors[i];
     if (!det->is_active)
       continue;
 
-    Vector2 start = vec2_scale(ivec2_to_vec2(det->position), CELL_SIZE);
+    // Draw Beam
+    if (det->view_distance > 0) {
+      IVector2 start = det->position;
+      IVector2 end =
+          ivec2_add(start, ivec2_scale(DIRECTION_VECTORS[det->direction],
+                                       det->view_distance));
 
-    /* Draw Detector Base (Triangle) */
+      Vector2 p1 = vec2_scale(ivec2_to_vec2(start), CELL_SIZE);
+      Vector2 p2 = vec2_scale(ivec2_to_vec2(end), CELL_SIZE);
+      Vector2 center_offset = {CELL_SIZE / 2, CELL_SIZE / 2};
+      p1 = vec2_add(p1, center_offset);
+      p2 = vec2_add(p2, center_offset);
+
+      Color beam_col = (det->detects_phase == PHASE_RED) ? RED : BLUE;
+      if (det->detects_phase == PHASE_GREEN)
+        beam_col = GREEN;
+      if (det->detects_phase == PHASE_YELLOW)
+        beam_col = YELLOW;
+
+      beam_col.a = (unsigned char)(100 + sinf(time * 10.0f) * 50);
+      DrawLineEx(p1, p2, 4.0f + sinf(time * 5.0f) * 2.0f, beam_col);
+    }
+
+    // Draw Base
+    Vector2 start = vec2_scale(ivec2_to_vec2(det->position), CELL_SIZE);
     Vector2 center = {start.x + CELL_SIZE * 0.5f, start.y + CELL_SIZE * 0.5f};
     DrawCircleV(center, 5.0f, (Color){100, 100, 100, 255});
-    /* Draw small "eye" based on phase */
     Color eye_col = (det->detects_phase == PHASE_RED) ? RED : BLUE;
+    if (det->detects_phase == PHASE_GREEN)
+      eye_col = GREEN;
+    if (det->detects_phase == PHASE_YELLOW)
+      eye_col = YELLOW;
     DrawCircleV(center, 3.0f, eye_col);
+  }
 
-    Vector2 end = start;
-    for (int d = 0; d < det->view_distance; d++) {
-      end.x += DIRECTION_VECTORS[det->direction].x * CELL_SIZE;
-      end.y += DIRECTION_VECTORS[det->direction].y * CELL_SIZE;
-    }
-
-    /* ALWAYS draw faint beam so player sees the threat */
-    float base_alpha = 0.2f + (sinf((float)GetTime() * 2.0f) + 1.0f) * 0.1f;
-    if (det->beam_alpha > base_alpha)
-      base_alpha = det->beam_alpha;
-
-    Color beam_color = {255, 0, 0, (unsigned char)(base_alpha * 200)};
-    /* If detected, beam is very bright red. If idle, it's faint red/pink */
-    if (det->beam_alpha < 0.5f) {
-      beam_color =
-          (det->detects_phase == PHASE_RED)
-              ? (Color){255, 100, 100, (unsigned char)(base_alpha * 100)}
-              : (Color){100, 100, 255, (unsigned char)(base_alpha * 100)};
-    }
-
-    DrawLineEx(
-        (Vector2){start.x + CELL_SIZE * 0.5f, start.y + CELL_SIZE * 0.5f},
-        (Vector2){end.x + CELL_SIZE * 0.5f, end.y + CELL_SIZE * 0.5f}, 3.0f,
-        beam_color);
+  if (interference_shader.id > 0) {
+    EndShaderMode();
   }
 
   if (game->glitch_intensity > 0.01f) {
@@ -363,12 +459,31 @@ void render_hud(GameState *game) {
   DrawTextEx(game_font, coherence_text, (Vector2){bar_x + 10, bar_y + 5}, 24, 2,
              WHITE);
 
-  const char *phase_text =
-      (game->player.phase_system.current_phase == PHASE_RED) ? "PHASE: RED"
-                                                             : "PHASE: BLUE";
-  Color phase_color = (game->player.phase_system.current_phase == PHASE_RED)
-                          ? (Color){255, 100, 100, 255}
-                          : (Color){100, 100, 255, 255};
+  const char *phase_text;
+  Color phase_color;
+  switch (game->player.phase_system.current_phase) {
+  case PHASE_RED:
+    phase_text = "PHASE: RED";
+    phase_color = (Color){255, 100, 100, 255};
+    break;
+  case PHASE_BLUE:
+    phase_text = "PHASE: BLUE";
+    phase_color = (Color){100, 100, 255, 255};
+    break;
+  case PHASE_GREEN:
+    phase_text = "PHASE: GREEN";
+    phase_color = PALETTE[20];
+    break;
+  case PHASE_YELLOW:
+    phase_text = "PHASE: YELLOW";
+    phase_color = PALETTE[21];
+    break;
+  default:
+    phase_text = "PHASE: UNKNOWN";
+    phase_color = WHITE;
+    break;
+  }
+
   DrawTextEx(game_font, phase_text,
              (Vector2){(float)(GetScreenWidth() - 220), 50}, 24, 2,
              phase_color);
@@ -503,8 +618,12 @@ void render_phase_tint(GameState *game) {
     DrawRectangle(0, 0, sw, sh, (Color){140, 80, 200, 15});
   } else if (game->player.phase_system.current_phase == PHASE_RED) {
     DrawRectangle(0, 0, sw, sh, (Color){255, 60, 40, 8});
-  } else {
+  } else if (game->player.phase_system.current_phase == PHASE_BLUE) {
     DrawRectangle(0, 0, sw, sh, (Color){40, 120, 255, 8});
+  } else if (game->player.phase_system.current_phase == PHASE_GREEN) {
+    DrawRectangle(0, 0, sw, sh, (Color){50, 255, 50, 8});
+  } else if (game->player.phase_system.current_phase == PHASE_YELLOW) {
+    DrawRectangle(0, 0, sw, sh, (Color){255, 255, 0, 8});
   }
 }
 
@@ -525,7 +644,7 @@ void render_dialog(GameState *game) {
   DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 200});
 
   int box_w = 700;
-  int box_h = 340;
+  int box_h = 680;
   int box_x = (sw - box_w) / 2;
   int box_y = (sh - box_h) / 2;
 
@@ -586,26 +705,6 @@ void render_dialog(GameState *game) {
              (Color){80, 200, 255, alpha});
 }
 
-void render_level_transition(GameState *game) {
-  int sw = GetScreenWidth();
-  int sh = GetScreenHeight();
-  float alpha = game->level_transition_timer * 255.0f;
-  if (alpha > 255)
-    alpha = 255;
-  DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, (unsigned char)alpha});
-
-  if (game->level_transition_timer > 0.5f) {
-    Vector2 tlsz = MeasureTextEx(game_font, game->level_name, 42, 3);
-    unsigned char ta =
-        (unsigned char)((game->level_transition_timer - 0.5f) * 2.0f * 255.0f);
-    if (ta > 255)
-      ta = 255;
-    DrawTextEx(game_font, game->level_name,
-               (Vector2){(sw - tlsz.x) / 2, (float)(sh / 2 - 21)}, 42, 3,
-               (Color){80, 200, 255, ta});
-  }
-}
-
 void render_win_screen(void) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
@@ -640,15 +739,6 @@ void render_win_screen(void) {
 void render_tunnels(GameState *game) {
   for (int i = 0; i < MAX_TUNNELS; i++) {
     QuantumTunnel *t = &game->tunnels[i];
-    /* Only render if active/spawned? Logic: spawn_tunnel sets position.
-       tunnels are always active unless game reset clears them.
-       But we check by tunnel->last_failed or just initialized?
-       init_game_state clears tunnels. spawn_tunnel fills them.
-       We should check if position is within map or something?
-       Or add 'active' flag to tunnel struct?
-       Current logic: spawn_tunnel marks !last_failed.
-       Let's just render all tunnels within map bounds.
-    */
     if (t->position.x == 0 && t->position.y == 0 && t->size.x == 0)
       continue;
 
@@ -663,8 +753,6 @@ void render_tunnels(GameState *game) {
     DrawRectangleLinesEx((Rectangle){pos.x, pos.y, size.x, size.y}, 3.0f,
                          border);
 
-    /* Swirl effect is okay but maybe too subtle? */
-    /* Add text label? "ZONE" */
     DrawTextEx(game_font, "TUNNEL", (Vector2){pos.x + 5, pos.y + 5}, 14, 2,
                border);
     Vector2 center = {pos.x + size.x * 0.5f, pos.y + size.y * 0.5f};
@@ -678,4 +766,314 @@ void render_tunnels(GameState *game) {
       DrawCircleV(p, 4.0f, (Color){200, 150, 255, 180});
     }
   }
+}
+
+void render_portals(GameState *game) {
+  float time = (float)GetTime();
+
+  for (int i = 0; i < MAX_PORTALS; i++) {
+    QuantumPortal *p = &game->portals[i];
+    if (!p->active)
+      continue;
+
+    Vector2 pos = vec2_scale(ivec2_to_vec2(p->position), CELL_SIZE);
+    Vector2 center = {pos.x + CELL_SIZE * 0.5f, pos.y + CELL_SIZE * 0.5f};
+
+    /* Phase color */
+    Color phase_col;
+    switch (p->phase) {
+    case PHASE_RED:
+      phase_col = (Color){255, 60, 40, 255};
+      break;
+    case PHASE_BLUE:
+      phase_col = (Color){40, 180, 255, 255};
+      break;
+    case PHASE_GREEN:
+      phase_col = (Color){50, 255, 50, 255};
+      break;
+    case PHASE_YELLOW:
+      phase_col = (Color){255, 255, 0, 255};
+      break;
+    default:
+      phase_col = WHITE;
+      break;
+    }
+
+    /* Pulsing glow background */
+    float pulse = (sinf(time * 3.0f + i * 2.0f) + 1.0f) * 0.5f;
+    float glow_radius = CELL_SIZE * (0.5f + pulse * 0.15f);
+    DrawCircleV(center, glow_radius, Fade(phase_col, 0.15f + pulse * 0.1f));
+
+    /* Inner core */
+    DrawCircleV(center, CELL_SIZE * 0.3f, Fade(phase_col, 0.4f + pulse * 0.3f));
+
+    /* Spinning ring particles */
+    for (int j = 0; j < 6; j++) {
+      float angle = time * 2.5f + j * (PI / 3.0f) + i * 1.5f;
+      float r = CELL_SIZE * 0.35f;
+      Vector2 pt = {center.x + cosf(angle) * r, center.y + sinf(angle) * r};
+      DrawCircleV(pt, 3.0f, Fade(phase_col, 0.7f + pulse * 0.3f));
+    }
+
+    /* Outer ring */
+    DrawCircleLinesV(center, CELL_SIZE * 0.4f,
+                     Fade(phase_col, 0.5f + pulse * 0.5f));
+
+    /* Phase label */
+    const char *label = "?";
+    switch (p->phase) {
+    case PHASE_RED:
+      label = "R";
+      break;
+    case PHASE_BLUE:
+      label = "A";
+      break;
+    case PHASE_GREEN:
+      label = "V";
+      break;
+    case PHASE_YELLOW:
+      label = "Am";
+      break;
+    default:
+      break;
+    }
+    int tw = MeasureText(label, 12);
+    DrawText(label, (int)(center.x - tw / 2), (int)(center.y - 6), 12, WHITE);
+  }
+}
+
+void render_oracles(GameState *game) {
+  for (int i = 0; i < MAX_ORACLES; i++) {
+    GroverOracle *oracle = &game->oracles[i];
+    if (!oracle->active)
+      continue;
+
+    Vector2 pos = vec2_scale(ivec2_to_vec2(oracle->position), CELL_SIZE);
+    Color col = GRAY;
+    if (oracle->query_count > 0) {
+      if (oracle->marked_phase == PHASE_RED)
+        col = RED;
+      else if (oracle->marked_phase == PHASE_BLUE)
+        col = BLUE;
+      else if (oracle->marked_phase == PHASE_GREEN)
+        col = GREEN;
+      else if (oracle->marked_phase == PHASE_YELLOW)
+        col = YELLOW;
+    }
+
+    DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE}, Fade(col, 0.5f));
+    DrawRectangleLines(pos.x, pos.y, CELL_SIZE, CELL_SIZE, col);
+    DrawText("?", pos.x + 15, pos.y + 10, 20, col);
+  }
+}
+
+void render_level_transition(GameState *game) {
+  int sw = GetScreenWidth();
+  int sh = GetScreenHeight();
+
+  DrawRectangle(0, 0, sw, sh, PALETTE[0]);
+
+  const char *title = "NIVEL COMPLETADO";
+  const char *subtitle = "Preparando siguiente fase...";
+
+  int title_width = MeasureText(title, 40);
+  int sub_width = MeasureText(subtitle, 20);
+
+  DrawText(title, sw / 2 - title_width / 2, sh / 3, 40, PALETTE[4]);
+  DrawText(subtitle, sw / 2 - sub_width / 2, sh / 3 + 60, 20, PALETTE[6]);
+
+  // STATS DISPLAY
+  char stat_buf[64];
+  int start_y = sh / 2;
+  int line_height = 30;
+  int label_x = sw / 2 - 180;
+  int value_x = sw / 2 + 120;
+
+  snprintf(stat_buf, 64, "TIEMPO:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%.2fs", game->player.level_time);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  start_y += line_height;
+  snprintf(stat_buf, 64, "PASOS:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%d", game->player.steps_taken);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  start_y += line_height;
+  snprintf(stat_buf, 64, "MUERTES:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%d", game->player.deaths);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  start_y += line_height;
+  snprintf(stat_buf, 64, "ENTRELAZAMIENTOS:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%d", game->player.entanglements_created);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  start_y += line_height;
+  snprintf(stat_buf, 64, "MEDICIONES:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%d", game->player.measurements_made);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  start_y += line_height;
+  snprintf(stat_buf, 64, "CAMBIOS DE FASE:");
+  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
+  snprintf(stat_buf, 64, "%d", game->player.phase_shifts);
+  DrawText(stat_buf, value_x, start_y, 20, WHITE);
+
+  DrawText("Presiona [ENTER] para continuar", sw / 2 - 150, sh - 100, 20,
+           Fade(WHITE, 0.5f + sinf(GetTime() * 3.0f) * 0.5f));
+}
+
+void render_encyclopedia(GameState *game) {
+  if (!game->encyclopedia_active)
+    return;
+
+  int sw = GetScreenWidth();
+  int sh = GetScreenHeight();
+
+  // Dim background
+  DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 200});
+
+  int w = 600;
+  int h = 400;
+  int x = (sw - w) / 2;
+  int y = (sh - h) / 2;
+
+  // Panel
+  DrawRectangle(x, y, w, h, PALETTE[1]);
+  DrawRectangleLines(x, y, w, h, PALETTE[7]);
+
+  QuantumConcept *page = &game->encyclopedia[game->encyclopedia_page];
+
+  // Header
+  DrawText("ENCICLOPEDIA CUANTICA", x + 20, y + 20, 20, PALETTE[4]);
+  char page_str[32];
+  snprintf(page_str, 32, "%d / %d", game->encyclopedia_page + 1,
+           game->encyclopedia_count);
+  DrawText(page_str, x + w - 80, y + 20, 20, PALETTE[6]);
+
+  // Content
+  if (page->unlocked) {
+    DrawText(page->concept_name, x + 40, y + 80, 30, PALETTE[12]);
+    DrawText(page->explanation, x + 40, y + 140, 20, WHITE);
+  } else {
+    DrawText("???", x + 40, y + 80, 30, PALETTE[7]);
+    DrawText("Bloqueado", x + 40, y + 140, 20, GRAY);
+  }
+
+  DrawText("Flechas para navegar | H para cerrar", x + 40, y + h - 40, 10,
+           PALETTE[6]);
+}
+
+/* === PARTICLE SYSTEM === */
+
+void spawn_particle(GameState *game, Vector2 pos, Vector2 vel, Color col,
+                    float size, float life) {
+  for (int i = 0; i < MAX_PARTICLES; i++) {
+    if (!game->particles[i].active) {
+      game->particles[i].active = true;
+      game->particles[i].position = pos;
+      game->particles[i].velocity = vel;
+      game->particles[i].color = col;
+      game->particles[i].size = size;
+      game->particles[i].life = life;
+      return;
+    }
+  }
+}
+
+void update_particles(GameState *game) {
+  float dt = GetFrameTime();
+  for (int i = 0; i < MAX_PARTICLES; i++) {
+    Particle *p = &game->particles[i];
+    if (p->active) {
+      p->position.x += p->velocity.x * dt;
+      p->position.y += p->velocity.y * dt;
+      p->life -= dt;
+
+      // Shrink over time
+      p->size -= dt * 2.0f;
+
+      if (p->life <= 0 || p->size <= 0) {
+        p->active = false;
+      }
+    }
+  }
+}
+
+void render_particles(GameState *game) {
+  for (int i = 0; i < MAX_PARTICLES; i++) {
+    Particle *p = &game->particles[i];
+    if (p->active) {
+      Color c = p->color;
+      c.a = (unsigned char)(255.0f * (p->life / 2.0f));
+      if (c.a > 255)
+        c.a = 255;
+      DrawCircleV(p->position, p->size, c);
+    }
+  }
+}
+
+/* === MENU RENDERER === */
+
+void render_main_menu(GameState *game) {
+  // Render Atmosphere as background
+  render_atmosphere_bg(game);
+
+  // Title
+  const char *title = "colapsores: QUANTUM PARADOX";
+  int title_w = MeasureText(title, 60);
+  DrawText(title, (GetScreenWidth() - title_w) / 2, 200, 60, RAYWHITE);
+
+  // Subtitle
+  const char *sub = "Phase Shift Expansion";
+  int sub_w = MeasureText(sub, 30);
+  DrawText(sub, (GetScreenWidth() - sub_w) / 2, 270, 30, SKYBLUE);
+
+  // Menu Options
+  int center_x = GetScreenWidth() / 2;
+  int start_y = 450;
+
+  const char *txt_start = (game->highest_level_unlocked > 0)
+                              ? "ENTER - CONTINUE GAME"
+                              : "ENTER - NEW GAME";
+  int start_w = MeasureText(txt_start, 30);
+
+  // Pulsing effect
+  float alpha = (sinf((float)GetTime() * 3.0f) + 1.0f) * 0.5f; // 0 to 1
+  Color col_start = WHITE;
+  col_start.a = (unsigned char)(150 + alpha * 105);
+
+  DrawText(txt_start, center_x - start_w / 2, start_y, 30, col_start);
+
+  const char *txt_reset = "R - RESET PROGRESS";
+  int reset_w = MeasureText(txt_reset, 20);
+  DrawText(txt_reset, center_x - reset_w / 2, start_y + 100, 20, GRAY);
+
+  DrawText("Kripta Studios - 2026", 20, GetScreenHeight() - 40, 20, DARKGRAY);
+}
+
+void render_pause_menu(GameState *game) {
+  // Semi-transparent overlay
+  DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(),
+                (Color){0, 0, 0, 150});
+
+  const char *title = "PAUSED";
+  int title_w = MeasureText(title, 50);
+  DrawText(title, (GetScreenWidth() - title_w) / 2, 300, 50, WHITE);
+
+  const char *txt_resume = "ESC - RESUME";
+  const char *txt_restart = "R - RESTART LEVEL";
+  const char *txt_quit = "Q - QUIT TO MENU";
+
+  DrawText(txt_resume, (GetScreenWidth() - MeasureText(txt_resume, 30)) / 2,
+           400, 30, WHITE);
+  DrawText(txt_restart, (GetScreenWidth() - MeasureText(txt_restart, 30)) / 2,
+           450, 30, WHITE);
+  DrawText(txt_quit, (GetScreenWidth() - MeasureText(txt_quit, 30)) / 2, 500,
+           30, RED);
 }

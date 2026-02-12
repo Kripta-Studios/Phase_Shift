@@ -1,7 +1,8 @@
 #include "utils.h"
+#include "quantum.h"
 
 // Global Definitions
-Color PALETTE[20];
+Color PALETTE[25];
 const IVector2 DIRECTION_VECTORS[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 Sound footstep_sounds[4];
 Sound blast_sound;
@@ -12,7 +13,23 @@ Sound phase_shift_sound;
 Music ambient_music;
 Font game_font;
 
+// New sound globals
+Sound teleport_sound;
+Sound measurement_sound;
+Sound entangle_sound;
+Sound qubit_rotate_sound;
+Sound oracle_sound;
+Sound ice_slide_sound;
+Sound mirror_reflect_sound;
+Sound decoherence_sound;
+Sound portal_activate_sound;
+Sound level_complete_sound;
+
 IVector2 ivec2(int x, int y) { return (IVector2){x, y}; }
+
+int ivec2_dist_manhattan(IVector2 a, IVector2 b) {
+  return abs(a.x - b.x) + abs(a.y - b.y);
+}
 
 IVector2 ivec2_add(IVector2 a, IVector2 b) {
   return ivec2(a.x + b.x, a.y + b.y);
@@ -29,6 +46,12 @@ Vector2 ivec2_to_vec2(IVector2 iv) {
 }
 
 Vector2 vec2_scale(Vector2 v, float s) { return (Vector2){v.x * s, v.y * s}; }
+
+Vector2 vec2_add(Vector2 a, Vector2 b) {
+  return (Vector2){a.x + b.x, a.y + b.y};
+}
+
+IVector2 ivec2_scale(IVector2 v, int s) { return (IVector2){v.x * s, v.y * s}; }
 
 Map *map_create(int rows, int cols) {
   Map *map = malloc(sizeof(Map));
@@ -96,11 +119,12 @@ bool inside_of_rect(IVector2 start, IVector2 size, IVector2 point) {
          point.y >= start.y && point.y < start.y + size.y;
 }
 
-bool eeper_can_stand_here(GameState *game, IVector2 start, int eeper_idx) {
-  EeperState *eeper = &game->eepers[eeper_idx];
+bool colapsor_can_stand_here(GameState *game, IVector2 start,
+                             int colapsor_idx) {
+  ColapsarState *colapsor = &game->colapsores[colapsor_idx];
 
-  for (int dx = 0; dx < eeper->size.x; dx++) {
-    for (int dy = 0; dy < eeper->size.y; dy++) {
+  for (int dx = 0; dx < colapsor->size.x; dx++) {
+    for (int dy = 0; dy < colapsor->size.y; dy++) {
       IVector2 pos = ivec2(start.x + dx, start.y + dy);
 
       if (!within_map(game, pos))
@@ -111,11 +135,11 @@ bool eeper_can_stand_here(GameState *game, IVector2 start, int eeper_idx) {
         return false;
       }
 
-      for (int i = 0; i < MAX_EEPERS; i++) {
-        if (i == eeper_idx || game->eepers[i].dead)
+      for (int i = 0; i < MAX_COLAPSORES; i++) {
+        if (i == colapsor_idx || game->colapsores[i].dead)
           continue;
 
-        EeperState *other = &game->eepers[i];
+        ColapsarState *other = &game->colapsores[i];
         if (inside_of_rect(other->position, other->size, pos)) {
           return false;
         }
@@ -143,28 +167,53 @@ Color get_cell_color(Cell cell, PhaseKind current_phase,
   case CELL_EXIT:
     return PALETTE[15];
   case CELL_WALL_RED:
-    if (current_phase == PHASE_RED || in_superposition) {
+    /* Solid (blocks) when in RED phase, ghostly (passable) otherwise */
+    if (current_phase == PHASE_RED && !in_superposition) {
       return (Color){255, 60, 40, 255};
     } else {
       return (Color){255, 60, 40, 60};
     }
   case CELL_WALL_BLUE:
-    if (current_phase == PHASE_BLUE || in_superposition) {
+    if (current_phase == PHASE_BLUE && !in_superposition) {
       return (Color){40, 180, 255, 255};
     } else {
       return (Color){40, 180, 255, 60};
     }
+  case CELL_WALL_GREEN:
+    if (current_phase == PHASE_GREEN && !in_superposition) {
+      return PALETTE[20];
+    } else {
+      return (Color){PALETTE[20].r, PALETTE[20].g, PALETTE[20].b, 60};
+    }
+  case CELL_WALL_YELLOW:
+    if (current_phase == PHASE_YELLOW && !in_superposition) {
+      return PALETTE[21];
+    } else {
+      return (Color){PALETTE[21].r, PALETTE[21].g, PALETTE[21].b, 60};
+    }
   case CELL_PLATFORM_RED:
-    if (current_phase == PHASE_RED || in_superposition) {
+    if (current_phase == PHASE_RED && !in_superposition) {
       return (Color){255, 120, 80, 255};
     } else {
       return (Color){255, 120, 80, 60};
     }
   case CELL_PLATFORM_BLUE:
-    if (current_phase == PHASE_BLUE || in_superposition) {
+    if (current_phase == PHASE_BLUE && !in_superposition) {
       return (Color){80, 160, 255, 255};
     } else {
       return (Color){80, 160, 255, 60};
+    }
+  case CELL_PLATFORM_GREEN:
+    if (current_phase == PHASE_GREEN && !in_superposition) {
+      return PALETTE[22];
+    } else {
+      return (Color){PALETTE[22].r, PALETTE[22].g, PALETTE[22].b, 60};
+    }
+  case CELL_PLATFORM_YELLOW:
+    if (current_phase == PHASE_YELLOW && !in_superposition) {
+      return PALETTE[23];
+    } else {
+      return (Color){PALETTE[23].r, PALETTE[23].g, PALETTE[23].b, 60};
     }
   default:
     return (Color){40, 40, 50, 255};
@@ -180,10 +229,17 @@ bool is_cell_solid_for_phase(Cell cell, PhaseKind phase,
     return true;
   case CELL_WALL_RED:
   case CELL_PLATFORM_RED:
-    return phase == PHASE_RED || in_superposition;
+    /* RED walls block RED phase, passable in other phases */
+    return phase == PHASE_RED && !in_superposition;
   case CELL_WALL_BLUE:
   case CELL_PLATFORM_BLUE:
-    return phase == PHASE_BLUE || in_superposition;
+    return phase == PHASE_BLUE && !in_superposition;
+  case CELL_WALL_GREEN:
+  case CELL_PLATFORM_GREEN:
+    return phase == PHASE_GREEN && !in_superposition;
+  case CELL_WALL_YELLOW:
+  case CELL_PLATFORM_YELLOW:
+    return phase == PHASE_YELLOW && !in_superposition;
   case CELL_FLOOR:
   case CELL_EXPLOSION:
   case CELL_EXIT:
@@ -215,6 +271,13 @@ void init_palette(void) {
   PALETTE[17] = (Color){255, 50, 50, 255};  /* Phase red neon */
   PALETTE[18] = (Color){30, 180, 255, 255}; /* Phase blue neon */
   PALETTE[19] = (Color){160, 60, 220, 255}; /* Superposition purple */
+
+  // New definitions
+  PALETTE[20] = (Color){50, 255, 50, 255};  /* Phase Green */
+  PALETTE[21] = (Color){255, 255, 0, 255};  /* Phase Yellow */
+  PALETTE[22] = (Color){80, 255, 80, 255};  /* Platform Green */
+  PALETTE[23] = (Color){255, 255, 80, 255}; /* Platform Yellow */
+  PALETTE[24] = (Color){255, 0, 255, 255};  /* Logic Purple */
 }
 
 void init_game_state(GameState *game, int rows, int cols) {
@@ -226,10 +289,10 @@ void init_game_state(GameState *game, int rows, int cols) {
     map_free(game->map);
     game->map = NULL;
   }
-  for (int i = 0; i < MAX_EEPERS; i++) {
-    if (game->eepers[i].path) {
-      path_free(game->eepers[i].path, game->eepers[i].path_rows);
-      game->eepers[i].path = NULL;
+  for (int i = 0; i < MAX_COLAPSORES; i++) {
+    if (game->colapsores[i].path) {
+      path_free(game->colapsores[i].path, game->colapsores[i].path_rows);
+      game->colapsores[i].path = NULL;
     }
   }
 
@@ -264,11 +327,11 @@ void init_game_state(GameState *game, int rows, int cols) {
 
   game->shown_level_intro = false;
 
-  for (int i = 0; i < MAX_EEPERS; i++) {
-    game->eepers[i].dead = true;
-    game->eepers[i].path = path_create(rows, cols);
-    game->eepers[i].path_rows = rows;
-    game->eepers[i].path_cols = cols;
+  for (int i = 0; i < MAX_COLAPSORES; i++) {
+    game->colapsores[i].dead = true;
+    game->colapsores[i].path = path_create(rows, cols);
+    game->colapsores[i].path_rows = rows;
+    game->colapsores[i].path_cols = cols;
   }
 
   for (int i = 0; i < MAX_ECHOS; i++) {
@@ -283,6 +346,15 @@ void init_game_state(GameState *game, int rows, int cols) {
     game->buttons[i].is_active = false;
   }
 
+  init_portals(game);
+
+  // Init player qubits
+  game->player.qubit_count = 0;
+  for (int i = 0; i < MAX_QUBITS; i++) {
+    init_qubit(&game->player.qubits[i]);
+    game->player.qubits[i].active = false;
+  }
+
   game->exit_position = ivec2(-1, -1);
   game->has_checkpoint = false;
 
@@ -293,7 +365,8 @@ void init_game_state(GameState *game, int rows, int cols) {
   if (sh <= 0)
     sh = SCREEN_HEIGHT;
   game->camera.offset = (Vector2){sw * 0.5f, sh * 0.5f};
-  game->camera.target = (Vector2){CELL_SIZE, CELL_SIZE};
+  game->camera.target =
+      (Vector2){cols * CELL_SIZE * 0.5f, rows * CELL_SIZE * 0.5f};
   game->camera.rotation = 0.0f;
   game->camera.zoom = 1.0f;
   game->turn_animation = 0.0f;

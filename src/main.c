@@ -1,6 +1,7 @@
 #include "common.h"
 #include "levels.h"
 #include "logic.h"
+#include "persistence.h"
 #include "render.h"
 #include "utils.h"
 
@@ -9,9 +10,9 @@ void cleanup_game(GameState *game) {
     map_free(game->map);
   }
 
-  for (int i = 0; i < MAX_EEPERS; i++) {
-    if (game->eepers[i].path) {
-      path_free(game->eepers[i].path, game->eepers[i].path_rows);
+  for (int i = 0; i < MAX_COLAPSORES; i++) {
+    if (game->colapsores[i].path) {
+      path_free(game->colapsores[i].path, game->colapsores[i].path_rows);
     }
   }
 }
@@ -48,8 +49,12 @@ int main(void) {
   GameState game;
   memset(&game, 0, sizeof(GameState));
 
+  game.state_kind = GAME_STATE_MAIN_MENU;
+  init_encyclopedia(&game);
+  load_game(&game);
+  init_atmosphere(&game);
+
   load_level(&game, 0);
-  init_intro_dialogs(&game);
 
   while (!WindowShouldClose()) {
     UpdateMusicStream(ambient_music);
@@ -115,7 +120,19 @@ int main(void) {
       break;
     }
 
+    case GAME_STATE_MAIN_MENU: {
+      update_atmosphere(&game);
+      update_main_menu(&game);
+      break;
+    }
+
     case GAME_STATE_PLAYING: {
+      /* Pause toggle */
+      if (IsKeyPressed(KEY_ESCAPE)) {
+        game.state_kind = GAME_STATE_PAUSE;
+        break;
+      }
+
       if (game.player.dead) {
         if (GetTime() - game.player.death_time > 2.0) {
           game.game_over = true;
@@ -124,7 +141,11 @@ int main(void) {
         if (check_level_complete(&game)) {
           game.state_kind = GAME_STATE_LEVEL_TRANSITION;
           game.level_transition_timer = 1.0f;
+          save_game(&game);
           if (game.current_level < MAX_LEVELS - 1) {
+            if (game.current_level + 1 > game.highest_level_unlocked) {
+              game.highest_level_unlocked = game.current_level + 1;
+            }
             load_level(&game, game.current_level + 1);
             show_level_dialog(&game);
             game.state_kind = GAME_STATE_DIALOG;
@@ -134,6 +155,8 @@ int main(void) {
         }
 
         /* Input - FIXED: All keys properly separated */
+        update_particles(&game);
+        update_atmosphere(&game);
         if (game.turn_animation <= 0.0f) {
           Command cmd = {0};
           bool input = false;
@@ -154,13 +177,17 @@ int main(void) {
             cmd.kind = CMD_STEP;
             cmd.dir = DIR_DOWN;
             input = true;
-          } else if (IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_E)) {
-            /* Z or E: Phase Change / Superposition */
+          } else if (IsKeyPressed(KEY_Z)) {
+            /* Z: Instant Phase Change */
             cmd.kind = CMD_PHASE_CHANGE;
             input = true;
           } else if (IsKeyPressed(KEY_SPACE)) {
-            /* Space: Superposition */
-            cmd.kind = CMD_PHASE_CHANGE;
+            /* Space: Superposition / Create Echo */
+            cmd.kind = CMD_SUPERPOSITION;
+            input = true;
+          } else if (IsKeyPressed(KEY_E)) {
+            /* E: Interact (Teleport/Entangle) */
+            cmd.kind = CMD_INTERACT;
             input = true;
           } else if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_LEFT_SHIFT)) {
             /* X or Shift: Plant Bomb */
@@ -172,24 +199,49 @@ int main(void) {
             input = true;
           }
 
+          /* Encyclopedia toggle */
+          if (IsKeyPressed(KEY_H)) {
+            game.encyclopedia_active = !game.encyclopedia_active;
+          }
+          if (game.encyclopedia_active) {
+            if (IsKeyPressed(KEY_RIGHT)) {
+              game.encyclopedia_page++;
+              if (game.encyclopedia_page >= game.encyclopedia_count)
+                game.encyclopedia_page = 0;
+            }
+            if (IsKeyPressed(KEY_LEFT)) {
+              game.encyclopedia_page--;
+              if (game.encyclopedia_page < 0)
+                game.encyclopedia_page = game.encyclopedia_count - 1;
+            }
+          }
+
 #ifdef DEBUG_MODE
           if (IsKeyPressed(KEY_F5)) {
+            if (game.current_level + 1 > game.highest_level_unlocked) {
+              game.highest_level_unlocked = game.current_level + 1;
+            }
             game.current_level++;
             if (game.current_level >= MAX_LEVELS) {
               game.state_kind = GAME_STATE_WIN;
             } else {
               load_level(&game, game.current_level);
-              game.level_transition_timer = 2.0f;
-              game.state_kind = GAME_STATE_LEVEL_TRANSITION;
+              show_level_dialog(&game);
+              game.state_kind = GAME_STATE_DIALOG;
             }
           }
 #endif
 
-          if (input) {
+          if (input && !game.encyclopedia_active) {
             execute_turn(&game, cmd);
           }
         }
       }
+      break;
+    }
+
+    case GAME_STATE_PAUSE: {
+      update_pause_menu(&game);
       break;
     }
 
@@ -218,27 +270,55 @@ int main(void) {
 
     BeginMode2D(game.camera);
 
-    if (game.state_kind != GAME_STATE_WIN) {
+    // Apply Screen Shake
+    if (game.screen_shake > 0.0f) {
+      float offset_x = (float)(rand() % 10 - 5) * game.screen_shake;
+      float offset_y = (float)(rand() % 10 - 5) * game.screen_shake;
+      game.camera.target.x -= offset_x;
+      game.camera.target.y -= offset_y;
+      // Note: We modify camera temporarily? Or need to reset?
+      // Raylib BeginMode2D applies the matrix. Modifying 'game.camera' here
+      // persists? Yes. We should probably reset it or use a temp camera.
+      // Actually, logic updates camera target to follow player.
+      // If we modify it here, logic will overwrite it next frame?
+      // Logic updates camera in update loop?
+      // Let's check where camera is updated.
+      // Usually 'update_camera(&game)'.
+      // If logic overwrites it, we can modify it just before BeginMode2D and
+      // rely on logic to reset it. BUT logic might run BEFORE this.
+    }
+
+    if (game.state_kind == GAME_STATE_MAIN_MENU) {
+      EndMode2D();
+      render_main_menu(&game);
+    } else if (game.state_kind != GAME_STATE_WIN) {
       render_grid_lines(&game);
       render_exit_glow(&game);
       render_game_cells(&game);
       render_button_markers(&game);
       render_tunnels(&game);
+      render_portals(&game);
       render_items(&game);
+      render_oracles(&game);
       render_bombs(&game);
-      render_eepers(&game);
+      render_colapsores(&game);
       render_player(&game);
+      render_particles(&game);
       render_quantum_effects(&game);
-    }
 
-    EndMode2D();
+      EndMode2D();
 
-    if (game.state_kind == GAME_STATE_WIN) {
+      render_dark_effects(&game);
+      render_hud(&game);
+      render_encyclopedia(&game);
+
+      if (game.state_kind == GAME_STATE_PAUSE) {
+        render_pause_menu(&game);
+      }
+    } else {
+      EndMode2D();
       render_win_screen();
     }
-
-    render_dark_effects(&game);
-    render_hud(&game);
 
     if (game.state_kind == GAME_STATE_DIALOG) {
       render_dialog(&game);
@@ -250,7 +330,9 @@ int main(void) {
     if (post_shader_ready) {
       end_post_processing(&game);
       /* HUD overlay rendered AFTER shader so it stays crisp */
-      render_hud(&game);
+      if (game.state_kind != GAME_STATE_MAIN_MENU) {
+        render_hud(&game);
+      }
       if (game.state_kind == GAME_STATE_DIALOG) {
         render_dialog(&game);
       }

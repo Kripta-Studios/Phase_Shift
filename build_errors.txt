@@ -1,0 +1,10 @@
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/main.c -o src/main.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/utils.c -o src/utils.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/logic.c -o src/logic.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/render.c -o src/render.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/levels.c -o src/levels.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/menus.c -o src/menus.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/persistence.c -o src/persistence.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/atmosphere.c -o src/atmosphere.o
+gcc -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -c src/quantum.c -o src/quantum.o
+gcc src/main.o src/utils.o src/logic.o src/render.o src/levels.o src/menus.o src/persistence.o src/atmosphere.o src/quantum.o -o eepers_v2.exe -L. -lraylib -lopengl32 -lgdi32 -lwinmm
