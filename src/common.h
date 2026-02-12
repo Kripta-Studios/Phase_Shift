@@ -15,7 +15,7 @@
 
 #define SCREEN_WIDTH 1600
 #define SCREEN_HEIGHT 900
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #define CELL_SIZE 50.0f
 #define MAX_COLAPSORES 30
 #define MAX_ITEMS 100

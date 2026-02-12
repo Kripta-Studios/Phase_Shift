@@ -31,37 +31,37 @@ int main(void) {
     footstep_sounds[i] = LoadSound("assets/sounds/footsteps.mp3");
     SetSoundPitch(footstep_sounds[i], 1.7f - i * 0.1f);
   }
-  blast_sound = LoadSound("assets/sounds/blast.ogg");
+  blast_sound = LoadSound("assets/sounds/blast.mp3");
   key_pickup_sound = LoadSound("assets/sounds/key-pickup.wav");
-  bomb_pickup_sound = LoadSound("assets/sounds/bomb-pickup.ogg");
-  checkpoint_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  bomb_pickup_sound = LoadSound("assets/sounds/bomb-pickup.mp3");
+  checkpoint_sound = LoadSound("assets/sounds/checkpoint.mp3");
   phase_shift_sound = LoadSound("assets/sounds/popup-show.wav");
 
   /* Load all remaining sound assets */
-  guard_step_sound = LoadSound("assets/sounds/guard-step.ogg");
+  guard_step_sound = LoadSound("assets/sounds/guard-step.mp3");
   open_door_sound = LoadSound("assets/sounds/open-door.wav");
   plant_bomb_sound = LoadSound("assets/sounds/plant-bomb.wav");
 
   /* Map unloaded externs to existing sound files */
   teleport_sound = LoadSound("assets/sounds/popup-show.wav");
   SetSoundPitch(teleport_sound, 1.3f);
-  measurement_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  measurement_sound = LoadSound("assets/sounds/checkpoint.mp3");
   SetSoundPitch(measurement_sound, 0.8f);
   entangle_sound = LoadSound("assets/sounds/popup-show.wav");
   SetSoundPitch(entangle_sound, 0.7f);
   qubit_rotate_sound = LoadSound("assets/sounds/popup-show.wav");
   SetSoundPitch(qubit_rotate_sound, 1.5f);
-  oracle_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  oracle_sound = LoadSound("assets/sounds/checkpoint.mp3");
   SetSoundPitch(oracle_sound, 1.2f);
-  ice_slide_sound = LoadSound("assets/sounds/guard-step.ogg");
+  ice_slide_sound = LoadSound("assets/sounds/guard-step.mp3");
   SetSoundPitch(ice_slide_sound, 1.4f);
-  mirror_reflect_sound = LoadSound("assets/sounds/blast.ogg");
+  mirror_reflect_sound = LoadSound("assets/sounds/blast.mp3");
   SetSoundPitch(mirror_reflect_sound, 1.8f);
-  decoherence_sound = LoadSound("assets/sounds/blast.ogg");
+  decoherence_sound = LoadSound("assets/sounds/blast.mp3");
   SetSoundPitch(decoherence_sound, 0.6f);
   portal_activate_sound = LoadSound("assets/sounds/popup-show.wav");
   SetSoundPitch(portal_activate_sound, 0.9f);
-  level_complete_sound = LoadSound("assets/sounds/checkpoint.ogg");
+  level_complete_sound = LoadSound("assets/sounds/checkpoint.mp3");
   SetSoundPitch(level_complete_sound, 1.1f);
 
   ambient_music = LoadMusicStream("assets/sounds/ambient.wav");

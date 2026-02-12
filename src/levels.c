@@ -778,8 +778,7 @@ void show_level_dialog(GameState *game) {
             "- Detector ROJO solo ve fase ROJA\n"
             "- Detector AZUL solo ve fase AZUL\n"
             "- Cambia a fase OPUESTA del detector\n"
-            "- Guardia: esquiva o elimina con bombas [X]\n\n"
-            "Recoge la llave (22,2) y sal por (22,centro).",
+            "- Guardia: esquiva o elimina con bombas [X]\n\n",
             MAX_DIALOG_TEXT);
     break;
   case 5:

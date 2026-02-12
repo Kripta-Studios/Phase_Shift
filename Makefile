@@ -6,7 +6,20 @@ SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c src/menus.c s
 OBJ = $(SRC:.c=.o)
 EXEC = phase_shift.exe
 
+# Default target (debug mode)
+all: CFLAGS += -DDEBUG_MODE
 all: $(EXEC)
+
+# Release target (no debug, copy files, no console)
+release: LDFLAGS += -mwindows
+release: clean
+	$(CC) $(CFLAGS) $(SRC) -o $(EXEC) $(LDFLAGS)
+	cmd //C "if not exist release mkdir release"
+	cmd //C "if not exist release\assets mkdir release\assets"
+	cmd //C "copy /Y $(EXEC) release"
+	cmd //C "copy /Y *.dll release"
+	cmd //C "copy /Y icon.png release"
+	cmd //C "xcopy /E /I /Y assets release\assets"
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS)
@@ -15,4 +28,5 @@ $(EXEC): $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(EXEC)
+	-cmd //C "del /Q $(subst /,\,$(OBJ)) $(EXEC)"
+
