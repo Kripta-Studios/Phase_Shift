@@ -6,6 +6,10 @@
 
 > *"Tu conciencia está entrelazada cuánticamente con un acelerador de partículas..."*
 
+<video src="./assets/Demo.mp4" controls="controls" width="100%">
+  Tu navegador no soporta el elemento de vídeo.
+</video>
+
 **Phase Shift** es un juego de puzzles 2D basado en mecánicas cuánticas reales. Creaado para la **Quantum Computing Game Jam**. Eres el **Sujeto 44**, un científico atrapado en un experimento cuántico fallido. Tu conciencia existe en múltiples fases de la realidad simultáneamente. Completa **20 niveles** de puzzles cuánticos antes de que tu coherencia cuántica colapse permanentemente.
 
 Las probabilidades cuánticas del juego (túneles cuánticos, superposición) se calculan mediante un servidor ejecutando **IBM Qiskit**, conectando la jugabilidad con circuitos cuánticos reales.
@@ -22,6 +26,8 @@ Desarrollado por **Kripta Studios** · Motor: [Raylib](https://www.raylib.com/) 
 ![Puzzle Solving](./assets/Screenshot2.png)
 *Resolviendo puzzles con superposición y entrelazamiento*
 
+![Fighting Enemies](./assets/Screenshot3.png)
+*Enfrentarse a enemigos cuánticos*
 ---
 
 ## 🎮 Controles
