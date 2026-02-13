@@ -6,9 +6,7 @@
 
 > *"Tu conciencia está entrelazada cuánticamente con un acelerador de partículas..."*
 
-<video src="./assets/Demo.mp4" controls="controls" width="100%">
-  Tu navegador no soporta el elemento de vídeo.
-</video>
+![Demo de Phase Shift](./assets/Demo.mp4)
 
 **Phase Shift** es un juego de puzzles 2D basado en mecánicas cuánticas reales. Creaado para la **Quantum Computing Game Jam**. Eres el **Sujeto 44**, un científico atrapado en un experimento cuántico fallido. Tu conciencia existe en múltiples fases de la realidad simultáneamente. Completa **20 niveles** de puzzles cuánticos antes de que tu coherencia cuántica colapse permanentemente.
 
