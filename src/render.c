@@ -249,7 +249,23 @@ void render_player(GameState *game) {
     pos = vec2_scale(ivec2_to_vec2(game->player.position), CELL_SIZE);
   }
 
-  DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE}, PALETTE[5]);
+  Color player_color = PALETTE[5];
+  switch (game->player.phase_system.current_phase) {
+  case PHASE_RED:
+    player_color = (Color){255, 80, 40, 255};
+    break;
+  case PHASE_GREEN:
+    player_color = (Color){50, 255, 50, 255};
+    break;
+  case PHASE_YELLOW:
+    player_color = (Color){255, 255, 0, 255};
+    break;
+  default:
+    player_color = PALETTE[5];
+    break;
+  }
+
+  DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE}, player_color);
   draw_eyes(pos, (Vector2){CELL_SIZE, CELL_SIZE}, game->player.eyes_angle,
             game->player.eyes);
 }
@@ -721,7 +737,7 @@ void render_win_screen(void) {
   DrawTextEx(game_font, sub, (Vector2){(sw - wssz.x) / 2, (float)(sh / 2 - 20)},
              26, 2, (Color){180, 200, 220, 200});
 
-  const char *credits = "PHASE SHIFT -- Kipta-Studios";
+  const char *credits = "PHASE SHIFT -- Alvaro Schwiedop Souto";
   Vector2 wcsz = MeasureTextEx(game_font, credits, 22, 2);
   DrawTextEx(game_font, credits,
              (Vector2){(sw - wcsz.x) / 2, (float)(sh / 2 + 40)}, 22, 2,
@@ -911,7 +927,7 @@ void render_level_transition(GameState *game) {
   DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
   snprintf(stat_buf, 64, "%d", game->player.entanglements_created);
   DrawText(stat_buf, value_x, start_y, 20, WHITE);
-  
+
   start_y += line_height;
   snprintf(stat_buf, 64, "CAMBIOS DE FASE:");
   DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
@@ -1056,7 +1072,8 @@ void render_main_menu(GameState *game) {
     DrawTextureEx(title_icon, icon_pos, 0.0f, scale, WHITE);
   }
 
-  DrawText("Kripta-Studios - 2026", 20, GetScreenHeight() - 40, 20, DARKGRAY);
+  DrawText("Alvaro Schwiedop Souto - 2026", 20, GetScreenHeight() - 40, 20,
+           DARKGRAY);
 }
 
 void render_pause_menu(GameState *game) {
