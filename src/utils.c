@@ -255,37 +255,38 @@ bool is_cell_solid_for_phase(Cell cell, PhaseKind phase,
 }
 
 void init_palette(void) {
-  PALETTE[0] = (Color){5, 5, 12, 255};      /* Background: abyss black */
-  PALETTE[1] = (Color){22, 25, 35, 255};    /* Floor: deep slate */
-  PALETTE[2] = (Color){45, 48, 62, 255};    /* Wall: dark gunmetal */
-  PALETTE[3] = (Color){70, 30, 35, 255};    /* Barricade: dark crimson */
-  PALETTE[4] = (Color){0, 255, 255, 255};   /* Cyan: keys/doors */
-  PALETTE[5] = (Color){60, 210, 255, 255};  /* Player: electric cyan */
-  PALETTE[6] = (Color){255, 160, 0, 255};   /* Bomb: amber glow */
-  PALETTE[7] = (Color){210, 220, 240, 255}; /* White: text */
-  PALETTE[8] = (Color){0, 220, 80, 255};    /* Guard: neon green */
-  PALETTE[9] = (Color){255, 120, 0, 255};   /* Gnome: deep orange */
-  PALETTE[10] = (Color){180, 0, 255, 255};  /* Checkpoint: vivid purple */
-  PALETTE[11] = (Color){255, 60, 0, 255};   /* Explosion: hot orange */
-  PALETTE[12] = (Color){255, 30, 50, 255};  /* Red/health */
-  PALETTE[13] = (Color){255, 255, 60, 255}; /* Yellow: eyes */
-  PALETTE[14] = (Color){80, 100, 255, 255}; /* Blue accent */
-  PALETTE[15] = (Color){0, 255, 100, 255};  /* Exit: neon green */
-  PALETTE[16] = (Color){15, 18, 28, 255};   /* Grid lines: near invisible */
-  PALETTE[17] = (Color){255, 0, 50, 255};   /* Phase red neon (VIBRANT) */
-  PALETTE[18] = (Color){0, 100, 255, 255};  /* Phase blue neon (VIBRANT) */
-  PALETTE[19] = (Color){160, 60, 220, 255}; /* Superposition purple */
+  PALETTE[0] = (Color){5, 5, 12, 255};      /* Fondo: negro abismo */
+  PALETTE[1] = (Color){22, 25, 35, 255};    /* Suelo: pizarra profunda */
+  PALETTE[2] = (Color){45, 48, 62, 255};    /* Pared: gris metal oscuro */
+  PALETTE[3] = (Color){70, 30, 35, 255};    /* Barricada: carmesí oscuro */
+  PALETTE[4] = (Color){0, 255, 255, 255};   /* Clan: llaves/puertas */
+  PALETTE[5] = (Color){60, 210, 255, 255};  /* Jugador: cian eléctrico */
+  PALETTE[6] = (Color){255, 160, 0, 255};   /* Bomba: brillo ámbar */
+  PALETTE[7] = (Color){210, 220, 240, 255}; /* Blanco: texto */
+  PALETTE[8] = (Color){0, 220, 80, 255};    /* Guardia: verde neón */
+  PALETTE[9] = (Color){255, 120, 0, 255};   /* Gnomo: naranja profundo */
+  PALETTE[10] = (Color){180, 0, 255, 255};  /* Checkpoint: púrpura vívido */
+  PALETTE[11] = (Color){255, 60, 0, 255};   /* Explosión: naranja caliente */
+  PALETTE[12] = (Color){255, 30, 50, 255};  /* Rojo/salud */
+  PALETTE[13] = (Color){255, 255, 60, 255}; /* Amarillo: ojos */
+  PALETTE[14] = (Color){80, 100, 255, 255}; /* Acento azul */
+  PALETTE[15] = (Color){0, 255, 100, 255};  /* Salida: verde neón */
+  PALETTE[16] =
+      (Color){15, 18, 28, 255}; /* Líneas de rejilla: casi invisibles */
+  PALETTE[17] = (Color){255, 0, 50, 255};   /* Fase roja neón (VIBRANTE) */
+  PALETTE[18] = (Color){0, 100, 255, 255};  /* Fase azul neón (VIBRANTE) */
+  PALETTE[19] = (Color){160, 60, 220, 255}; /* Púrpura superposición */
 
-  // New definitions (VIBRANT)
-  PALETTE[20] = (Color){0, 255, 0, 255};    /* Phase Green (Pure Lime) */
-  PALETTE[21] = (Color){255, 255, 0, 255};  /* Phase Yellow (Pure Yellow) */
-  PALETTE[22] = (Color){80, 255, 80, 255};  /* Platform Green */
-  PALETTE[23] = (Color){255, 255, 80, 255}; /* Platform Yellow */
-  PALETTE[24] = (Color){255, 0, 255, 255};  /* Logic Purple */
+  // Nuevas definiciones (VIBRANTE)
+  PALETTE[20] = (Color){0, 255, 0, 255};    /* Fase Verde (Lima Puro) */
+  PALETTE[21] = (Color){255, 255, 0, 255};  /* Fase Amarilla (Amarillo Puro) */
+  PALETTE[22] = (Color){80, 255, 80, 255};  /* Plataforma Verde */
+  PALETTE[23] = (Color){255, 255, 80, 255}; /* Plataforma Amarilla */
+  PALETTE[24] = (Color){255, 0, 255, 255};  /* Púrpura Lógico */
 }
 
 void init_game_state(GameState *game, int rows, int cols) {
-  // Backup persistent state
+  // Respaldar estado persistente
   int saved_level = game->current_level;
   GameStateKind saved_state = game->state_kind;
   DialogSystem saved_dialog = game->dialog;

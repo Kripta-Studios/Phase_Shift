@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #ifdef _WIN32
 #include <windows.h>
 #include <wininet.h>
@@ -111,7 +110,7 @@ int qiskit_random_bit(void) {
 }
 
 float qiskit_random_float(void) {
-  /* Build a float from multiple quantum bits for better resolution */
+  /* Construir float de múltiples bits cuánticos para mejor resolución */
   int bits = 0;
   for (int i = 0; i < 8; i++) {
     bits = (bits << 1) | qiskit_random_bit();

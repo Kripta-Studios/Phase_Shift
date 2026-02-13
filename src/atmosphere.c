@@ -99,10 +99,10 @@ void render_flashlight_overlay(GameState *game) {
   int sw = GetScreenWidth();
   int sh = GetScreenHeight();
 
-  // Dark overlay everywhere
+  // Capa oscura en todas partes
   DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 180});
 
-  // Flashlight cone (simple circle around player screen pos)
+  // Cono de linterna (círculo simple alrededor de pos pantalla jugador)
   Vector2 player_screen = {
       (game->player.position.x * CELL_SIZE) + CELL_SIZE / 2 -
           game->camera.target.x + game->camera.offset.x,
@@ -110,7 +110,7 @@ void render_flashlight_overlay(GameState *game) {
           game->camera.target.y + game->camera.offset.y};
 
   float radius = 200.0f;
-  // Draw a bright circle to "cut through" the darkness
+  // Dibujar círculo brillante para "cortar" la oscuridad
   DrawCircleGradient((int)player_screen.x, (int)player_screen.y, radius,
                      (Color){0, 0, 0, 0}, (Color){0, 0, 0, 0});
 }

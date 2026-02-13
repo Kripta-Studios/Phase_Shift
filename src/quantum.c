@@ -58,32 +58,38 @@ void apply_cnot_gate(Qubit *control, Qubit *target) {
   if (control->is_measured || target->is_measured)
     return;
 
-  // This is a simplified simulation since we don't store the full state vector
-  // of the system In a real simulation we'd need a tensor product of the
-  // states. For this game jam, we'll approximate: If control is likely |1>,
-  // flip target. If control is superposition, we entitle them (simplified).
+  /* Esta es una simulación simplificada ya que no guardamos el vector de estado
+   * completo del sistema En una simulación real necesitaríamos un producto
+   * tensorial de los estados. Para esta game jam, aproximaremos: Si control es
+   * probablemente |1>, invertir objetivo. Si control es superposición, los
+   * entrelazamos (simplificado).
+   */
 
-  // For now, let's just use probability to decide if we flip, but without
-  // collapsing? Actually, accurate CNOT requires a multi-qubit system state.
-  // Let's implement a "Probabilistic CNOT" which is physically wrong but
-  // functionally OK for the game logic: "If measure(control) would be 1, apply
-  // X to target". AND it collapses the control qubit. Wait, that's not CNOT.
+  /* Por ahora, usemos probabilidad para decidir si invertimos, pero sin
+   * ¿colapsar? De hecho, CNOT preciso requiere estado de sistema multi-qubit.
+   * Implementemos un "CNOT Probabilístico" que es físicamente incorrecto pero
+   * funcionalmente OK para lógica de juego: "Si measure(control) fuera 1,
+   * aplicar X a objetivo". Y colapsa el qubit de control. Espera, eso no es
+   * CNOT.
+   */
 
-  // Better approximation for independent qubit structs:
-  // Calculate P(control=1).
-  // Mix target state based on that probability?
-  // No, let's keep it simple: CNOT only works if control is fully |0> or |1>
-  // (Classical control) OR allow it to Entagle them (special state).
+  /* Mejor aproximación para estructuras qubit independientes:
+   * Calular P(control=1).
+   * ¿Mezclar estado objetivo basado en esa probabilidad?
+   * No, mantengámoslo simple: CNOT solo funciona si control es totalmente |0> o
+   * |1> (Control Clásico) O permitir entrelazarlos (estado especial).
+   */
 
-  // For now: Classical Control CNOT
+  // Por ahora: Control Clásico CNOT
   float p1 = get_qubit_probability(control, 1);
   if (p1 > 0.99f) {
     apply_pauli_x_gate(target);
   } else if (p1 > 0.01f) {
-    // Control is in superposition.
-    // We can't properly simulate entanglement with independent structs easily
-    // without a system state vector. Let's just say "Entanglement required" and
-    // do nothing or make a sound. Or we force collapse control?
+    // Control está en superposición.
+    // No podemos simular entrelazamiento adecuadamente con structs
+    // independientes fácilmente sin un vector de estado de sistema. Digamos
+    // "Entrelazamiento requerido" y no hacer nada o hacer un sonido. ¿O
+    // forzamos colapso de control?
     measure_qubit(control);
     if (control->measured_value == 1) {
       apply_pauli_x_gate(target);

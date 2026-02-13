@@ -25,14 +25,14 @@ void SetAudioSoundVolume(AudioSound sound, float volume);
 void SetAudioSoundPitch(AudioSound sound, float pitch);
 bool IsAudioSoundValid(AudioSound sound);
 
-// Music Streaming
+// Streaming de Música
 AudioMusic LoadAudioMusic(const char *fileName);
 void UnloadAudioMusic(AudioMusic music);
 void PlayAudioMusic(AudioMusic music);
 void StopAudioMusic(AudioMusic music);
 void SetAudioMusicVolume(AudioMusic music, float volume);
-void UpdateAudioMusic(
-    AudioMusic music); // For consistency, though Miniaudio engine handles this
+void UpdateAudioMusic(AudioMusic music); // Por consistencia, aunque el motor
+                                         // Miniaudio maneja esto
 bool IsAudioMusicValid(AudioMusic music);
 bool IsAudioMusicPlaying(AudioMusic music);
 

@@ -621,6 +621,12 @@ void load_level_10(GameState *game) {
   /* Llave en isla 2 */
   allocate_item(game, ivec2(15, 3), ITEM_KEY);
 
+  /* REDISEÑO:
+   * 1. Botones a la Izquierda (accesibles).
+   * 2. Barricada bloquea camino a Derecha.
+   * 3. Llave pasada la Barricada.
+   * 4. Salida rodeada de Puertas (requiere Llave).
+   */
   /* Puerta y salida en isla 1 */
   game->map->data[rows / 2][18] = CELL_DOOR;
   game->exit_position = ivec2(18, rows / 2);
@@ -635,34 +641,34 @@ void load_level_10(GameState *game) {
   game->player.phase_system.green_unlocked = false;
 }
 
-/* ========== SYSTEM FUNCTIONS ========== */
+/* ========== FUNCIONES DEL SISTEMA ========== */
 
 void load_level(GameState *game, int level_index) {
   if (level_index == 0) {
     init_encyclopedia(game);
   }
 
-  // Reset Level Stats
-  // Reset Level Stats ONLY if it's a fresh start of a new level code?
-  // User wants stats to ACCUMULATE even if they die and restart.
-  // So we should NOT reset deaths/measurements/etc here.
-  // But wait, if they start a NEW game, stats should be 0.
-  // `init_game_state` zeroes the whole GameState, so stats start at 0.
-  // `load_level` is called during gameplay.
-  // If we comment these out, stats will persist across levels AND restarts.
-  // We just need to reset `steps_taken` and `level_time` for the current run
-  // functionality? Let's reset transient level progress, but keep "lifetime"
-  // stats.
+  // Reiniciar Estadísticas de Nivel
+  // Reiniciar Estadísticas de Nivel SOLO si es un inicio fresco de código de
+  // nivel? Usuario quiere que estadísticas SE ACUMULEN incluso si mueren y
+  // reinician. Así que NO deberíamos reiniciar muertes/mediciones/etc aquí.
+  // Pero espera, si inician un NUEVO juego, estadísticas deben ser 0.
+  // initialized pone a cero todo el GameState, así que estadísticas empiezan en
+  // 0. load_level es llamado durante el juego. Si comentamos esto, estadísticas
+  // persistirán entre niveles Y reinicios. Solo necesitamos reiniciar
+  // steps_taken y level_time para la ejecución actual ¿funcionalidad?
+  // Reiniciemos progreso transitorio de nivel, pero mantenemos "vida"
+  // estadísticas.
 
   game->player.steps_taken = 0;
   game->player.level_time = 0.0;
-  // game->player.measurements_made // KEEP
-  // game->player.entanglements_created // KEEP
-  // game->player.phase_shifts // KEEP
-  // game->player.deaths // KEEP
-  game->player.qubit_count = 0; // Items reset
-  game->player.keys = 0;        // Items reset
-  game->player.bombs = 0;       // Items reset
+  // game->player.measurements_made // MANTENER
+  // game->player.entanglements_created // MANTENER
+  // game->player.phase_shifts // MANTENER
+  // game->player.deaths // MANTENER
+  game->player.qubit_count = 0; // Items reiniciados
+  game->player.keys = 0;        // Items reiniciados
+  game->player.bombs = 0;       // Items reiniciados
 
   switch (level_index) {
   case 0:

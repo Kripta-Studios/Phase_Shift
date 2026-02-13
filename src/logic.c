@@ -497,7 +497,7 @@ void update_quantum_detectors(GameState *game) {
     IVector2 ray_pos = det->position;
     bool detected = false;
     Direction current_dir = det->direction;
-    det->current_length = 0; // Reset length each frame
+    det->current_length = 0; // Reiniciar longitud cada frame
 
     for (int dist = 1; dist <= det->view_distance; dist++) {
       ray_pos = ivec2_add(ray_pos, DIRECTION_VECTORS[current_dir]);
@@ -505,14 +505,14 @@ void update_quantum_detectors(GameState *game) {
       if (!within_map(game, ray_pos))
         break;
 
-      // Update actual length traversed (visuals will likely use this)
-      // Note: This logic assumes straight beams (no mirrors) for visual length
-      // matching If mirrors bend it, current_length will represent total path
-      // length, but renderer might draw it straight if not updated. But for
-      // WALLS, this fixes "beam going through wall".
+      // Actualizar longitud real recorrida (lo visual usará esto)
+      // Nota: asume rayos rectos (sin espejos) para longitud visual
+      // Si espejos lo doblan, current_length será la ruta total
+      // pero el render podría dibujarlo recto si no se actualiza.
+      // Para PAREDES, esto arregla "rayo atravesando pared".
       det->current_length = dist;
 
-      // Check Oracle Interaction
+      // Comprobar interacción con Oráculo
       for (int o = 0; o < MAX_ORACLES; o++) {
         GroverOracle *oracle = &game->oracles[o];
         if (ivec2_eq(oracle->position, ray_pos)) {

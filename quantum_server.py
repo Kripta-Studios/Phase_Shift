@@ -8,7 +8,7 @@ from qiskit_aer import AerSimulator
 
 # --- CONFIGURACIÓN ---
 PORT = 8609
-IP = "91.99.90.39"
+IP = "Por seguridad oculto la IP de mi VPS, este juego se conecta a él"
 LOG_FILE = "servidor_logs.txt"
 
 # SIMULADOR CUÁNTICO GLOBAL

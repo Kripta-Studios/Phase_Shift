@@ -53,9 +53,9 @@ AudioSound LoadAudioSound(const char *fileName) {
     return wrapper;
   }
 
-  // Use MA_SOUND_FLAG_DECODE to load fully into memory (low latency for SFX)
-  // Also MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION could be used
-  // for extra optimization if needed
+  // Usar MA_SOUND_FLAG_DECODE para cargar completamente en memoria (baja
+  // latencia para SFX) También se podría usar MA_SOUND_FLAG_NO_PITCH |
+  // MA_SOUND_FLAG_NO_SPATIALIZATION para optimización extra si es necesario
   ma_result result = ma_sound_init_from_file(
       &engine, fileName, MA_SOUND_FLAG_DECODE, NULL, NULL, sound);
 

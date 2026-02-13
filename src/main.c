@@ -343,7 +343,7 @@ int main(void) {
       break;
     }
 
-    /* === RENDER WITH POST-PROCESSING SHADER === */
+    /* === RENDERIZADO CON SHADER DE POST-PROCESADO === */
     if (post_shader_ready) {
       begin_post_processing();
     } else {
@@ -353,22 +353,22 @@ int main(void) {
 
     BeginMode2D(game.camera);
 
-    // Apply Screen Shake
+    // Aplicar temblor de pantalla
     if (game.screen_shake > 0.0f) {
       float offset_x = (float)(rand() % 10 - 5) * game.screen_shake;
       float offset_y = (float)(rand() % 10 - 5) * game.screen_shake;
       game.camera.target.x -= offset_x;
       game.camera.target.y -= offset_y;
-      // Note: We modify camera temporarily? Or need to reset?
-      // Raylib BeginMode2D applies the matrix. Modifying 'game.camera' here
-      // persists? Yes. We should probably reset it or use a temp camera.
-      // Actually, logic updates camera target to follow player.
-      // If we modify it here, logic will overwrite it next frame?
-      // Logic updates camera in update loop?
-      // Let's check where camera is updated.
-      // Usually 'update_camera(&game)'.
-      // If logic overwrites it, we can modify it just before BeginMode2D and
-      // rely on logic to reset it. BUT logic might run BEFORE this.
+      // Nota: ¿Modificamos cámara temporalmente? ¿O reiniciar?
+      // BeginMode2D aplica la matriz. Modificar 'game.camera' aquí
+      // ¿persiste? Sí. Deberíamos reiniciarla o usar cámara temporal.
+      // De hecho, la lógica actualiza el objetivo para seguir al jugador.
+      // ¿Si lo modificamos aquí, la lógica lo sobrescribe el siguiente frame?
+      // ¿Lógica actualiza cámara en bucle de actualización?
+      // Comprobemos dónde se actualiza la cámara.
+      // Úsualmente 'update_camera(&game)'.
+      // Si la lógica sobrescribe, podemos modificar justo antes de BeginMode2D
+      // y confiar que la lógica lo resetee. PERO la lógica podría correr ANTES.
     }
 
     if (game.state_kind == GAME_STATE_MAIN_MENU) {

@@ -4,7 +4,7 @@
 #include "common.h"
 #include "utils.h"
 
-// Post-processing shader system
+// Sistema de shader de post-procesado
 extern Shader post_shader;
 extern RenderTexture2D post_target;
 extern bool post_shader_ready;

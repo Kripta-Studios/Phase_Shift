@@ -4,7 +4,7 @@
 #include "common.h"
 #include "utils.h"
 
-// Spawning & Level Builders
+// Aparición y Constructores de Nivel
 void spawn_guard(GameState *game, IVector2 pos);
 void spawn_gnome(GameState *game, IVector2 pos);
 void allocate_item(GameState *game, IVector2 pos, ItemKind kind);

@@ -384,21 +384,25 @@ typedef struct {
   int encyclopedia_page;
 
   Particle particles[MAX_PARTICLES];
+  int current_length; // Longitud actual del rayo bloqueada por paredes
+  float alpha_real, alpha_imag; // Amplitud |0>
+  float beta_real, beta_imag;   // Amplitud |1>
   float screen_shake;
   float flash_intensity;
 
-  // Atmosphere
+  // Atmósfera
   Star stars[MAX_STARS];
   Atom atoms[MAX_ATOMS];
 
-  // Flashlight
+  // Linterna
   bool flashlight_active;
   float flashlight_angle;
 
-  // Level transition: deferred next level loading
-  int pending_next_level; // -1 = none, >=0 = level to load after transition
+  // Transición de nivel: carga diferida del siguiente nivel
+  int pending_next_level; // -1 = ninguno, >=0 = nivel a cargar tras la
+                          // transición
 
-  // Floating Text System
+  // Sistema de Texto Flotante
   struct {
     Vector2 position;
     char text[32];

@@ -32,15 +32,15 @@ void load_game(GameState *game) {
   if (file) {
     fread(&game->highest_level_unlocked, sizeof(int), 1, file);
 
-    // Load Encyclopedia Unlocked Status
+    // Cargar Estado Desbloqueado de Enciclopedia
     for (int i = 0; i < game->encyclopedia_count; i++) {
-      if (i < 10) { // Safety check
+      if (i < 10) { // Control de seguridad
         fread(&game->encyclopedia[i].unlocked, sizeof(bool), 1, file);
       }
     }
 
-    // Load Persistent Player Stats
-    // Check if file has enough data (backward compatibility)
+    // Cargar Estadísticas Persistentes de Jugador
+    // Comprobar si archivo tiene suficientes datos (retrocompatibilidad)
     long pos = ftell(file);
     fseek(file, 0, SEEK_END);
     long end = ftell(file);

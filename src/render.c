@@ -176,10 +176,11 @@ void render_game_cells(GameState *game) {
                        arrow_col);
         }
       } else if (cell == CELL_DECOHERENCE_ZONE) {
-        // Purple semi-transparent overlay with random noise in future?
+        // Superposición púrpura semi-transparente con ruido aleatorio ¿en el
+        // futuro?
         DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE},
                        Fade(PURPLE, 0.3f));
-        // Draw some "static" lines/points
+        // Dibujar algunas líneas/puntos "estáticos"
         for (int i = 0; i < 3; i++) {
           int offX = rand() % (int)CELL_SIZE;
           int offY = rand() % (int)CELL_SIZE;
