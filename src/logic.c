@@ -1185,6 +1185,15 @@ void execute_turn(GameState *game, Command cmd) {
   /* Automatic Portal Check */
   handle_portal_teleport(game);
 
+  /* Check for telefrag (landing on enemy after portal) */
+  for (int i = 0; i < MAX_COLAPSORES; i++) {
+    if (!game->colapsores[i].dead &&
+        ivec2_eq(game->player.position, game->colapsores[i].position)) {
+      kill_player(game);
+      break;
+    }
+  }
+
   check_level_events(game);
 }
 

@@ -188,6 +188,7 @@ void handle_portal_teleport(GameState *game) {
       game->portals[dest_idx].active) {
     // Teleport!
     game->player.position = game->portals[dest_idx].position;
+
     // Optional: consume 1 turn or just move instant?
     // Let's make it instant but play sound/effect
     if (IsAudioSoundValid(teleport_sound)) {
