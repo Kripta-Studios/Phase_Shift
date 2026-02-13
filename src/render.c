@@ -911,13 +911,7 @@ void render_level_transition(GameState *game) {
   DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
   snprintf(stat_buf, 64, "%d", game->player.entanglements_created);
   DrawText(stat_buf, value_x, start_y, 20, WHITE);
-
-  start_y += line_height;
-  snprintf(stat_buf, 64, "MEDICIONES:");
-  DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);
-  snprintf(stat_buf, 64, "%d", game->player.measurements_made);
-  DrawText(stat_buf, value_x, start_y, 20, WHITE);
-
+  
   start_y += line_height;
   snprintf(stat_buf, 64, "CAMBIOS DE FASE:");
   DrawText(stat_buf, label_x, start_y, 20, PALETTE[5]);

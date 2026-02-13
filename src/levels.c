@@ -739,7 +739,7 @@ void init_intro_dialogs(GameState *game) {
 
   strncpy(d->pages[0].title, "INICIALIZANDO...", 64);
   strncpy(d->pages[0].text,
-          "Sujeto 44 inicializado.\nCoherencia cuantica: 98%.\n\n"
+          "Sujeto 44 inicializado.\nCoherencia cuantica: 100%.\n\n"
           "Objetivo: Atravesar las instalaciones.\n"
           "Estado: Varianza de fase detectada.",
           MAX_DIALOG_TEXT);
@@ -776,7 +776,13 @@ void init_intro_dialogs(GameState *game) {
           "Los tuneles y la superposicion usan circuitos\n"
           "cuanticos reales (IBM Qiskit) para calcular\n"
           "las probabilidades de colapso.\n\n"
-          "Buena suerte, Sujeto 44.",
+          "Buena suerte, Sujeto 44.\n\n"
+          "\n[WASD] Movimiento\n"
+          "[Z] Cambia de fase\n"
+          "[ESPACIO] Inicia superposicion\n"
+          "[E] Empieza entrelazamiento\n"
+          "[X] Pone una bomba\n"
+          "[ESC] Cierra el juego",
           MAX_DIALOG_TEXT);
 }
 
@@ -824,9 +830,9 @@ void show_level_dialog(GameState *game) {
   case 3:
     strncpy(d->pages[0].text,
             "COMPUERTA HADAMARD\n\n"
-            "Dos botones activan el muro rojo (izq).\n"
-            "La LLAVE esta aislada en la esquina sup-izq.\n\n"
-            "1. Ve a la IZQUIERDA (Botones)\n"
+            "Dos botones activan el muro rojo.\n"
+            "La LLAVE esta en la esquina sup-izq.\n\n"
+            "1. Ve a hacia los botones\n"
             "2. Activa SUPERPOSICION [ESPACIO] sobre un boton\n"
             "3. Espera [T] y corre al otro boton\n"
             "4. El muro rojo se abrira\n"
@@ -836,9 +842,9 @@ void show_level_dialog(GameState *game) {
   case 4:
     strncpy(d->pages[0].text,
             "ALGORITMO DE GROVER\n\n"
-            "Laberinto denso. Llave en esquina sup-izq.\n"
+            "Laberinto denso.\n"
             "La salida esta confinada por puertas azules.\n\n"
-            "- Cambia fase para cruzar aperturas de color\n"
+            "- Cambia fase con [Z] para cruzar aperturas de color\n"
             "- Detector ROJO solo ve fase ROJA\n"
             "- Detector AZUL solo ve fase AZUL\n"
             "- Cambia a fase OPUESTA del detector\n"
@@ -862,8 +868,6 @@ void show_level_dialog(GameState *game) {
     strncpy(d->pages[0].text,
             "CORRECCION DE ERRORES CUANTICOS\n\n"
             "La redundancia protege la informacion cuantica.\n"
-            "Tres corredores paralelos — cada uno con\n"
-            "un tipo diferente de \"ruido\":\n\n"
             "SUPERIOR: Muros de fase (cambia con [Z])\n"
             "MEDIO: Guardia patrullando (usa bombas [X])\n"
             "INFERIOR: Detectores (evita su fase)\n\n"
@@ -874,12 +878,12 @@ void show_level_dialog(GameState *game) {
   case 7:
     strncpy(d->pages[0].text,
             "SUPREMACIA CUANTICA\n\n"
-            "Prueba final: todas las mecanicas combinadas.\n"
+            "Todas las mecanicas combinadas.\n"
             "La salida esta fuertemente protegida.\n\n"
             "ZONA 1: Laberinto de fase (cambia fase)\n"
             "ZONA 2: Detectores + 2 botones (usa eco)\n"
             "ZONA 3: Tunel cuantico + llave\n\n"
-            "TIP: Usa la BOMBA (B) para romper el muro\n"
+            "TIP: Usa la BOMBA [X] para romper el muro\n"
             "que encierra al enemigo si se queda atascado.\n"
             "- Cruza el laberinto alternando fases\n"
             "- Usa un ECO para un boton\n"
@@ -939,7 +943,9 @@ void show_level_dialog(GameState *game) {
             "2. Un GUARDIA patrulla al otro lado\n"
             "3. Usa una BOMBA [X] para eliminarlo\n"
             "4. Recoge la LLAVE y abre la PUERTA\n\n"
-            "Tienes bombas disponibles.",
+            "Tienes bombas disponibles.\n"
+            "Presionando [E] puedes ENTRELAZAR con un\n"
+            "GUARDIA, copia 6 movimientos",
             MAX_DIALOG_TEXT);
     break;
   case 12:
@@ -951,9 +957,7 @@ void show_level_dialog(GameState *game) {
             "1. Ve al primer boton\n"
             "2. Activa SUPERPOSICION [ESPACIO]\n"
             "3. Graba tu camino al segundo boton\n"
-            "4. Tu ECO mantiene el primero pulsado\n\n"
-            "Los botones estan a solo 6 casillas\n"
-            "de distancia. Tienes 12 turnos de eco.",
+            "4. Tu ECO mantiene el primero pulsado\n\n",
             MAX_DIALOG_TEXT);
     break;
   case 13:
@@ -1026,7 +1030,6 @@ void show_level_dialog(GameState *game) {
     break;
   case 18:
     strncpy(d->pages[0].text,
-            "EJECUCION FINAL\n\n"
             "Dos botones dispersos.\n"
             "Muros de fase oscilantes.\n"
             "Guardias en patrulla.\n\n"
@@ -1038,7 +1041,6 @@ void show_level_dialog(GameState *game) {
     break;
   case 19:
     strncpy(d->pages[0].text,
-            "FINAL CUANTICO\n\n"
             "Bienvenido al nucleo del procesador.\n"
             "INICIO DE SISTEMA: FASE AZUL FORZADA.\n\n"
             "OBJETIVO: Recolectar 3 LLAVES de seguridad.\n"
