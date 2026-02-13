@@ -567,19 +567,28 @@ bool attempt_quantum_tunnel(GameState *game, int tunnel_idx) {
   QuantumTunnel *tunnel = &game->tunnels[tunnel_idx];
   PlayerState *player = &game->player;
 
-  if (player->phase_system.state != PHASE_STATE_SUPERPOSITION) {
+  /* Check if player is on the tunnel */
+  if (!inside_of_rect(tunnel->position, tunnel->size, player->position)) {
     return false;
   }
 
-  if (!inside_of_rect(tunnel->position, tunnel->size, player->position)) {
+  /* Requirement: Must be in Superposition */
+  if (player->phase_system.state != PHASE_STATE_SUPERPOSITION) {
+    /* Feedback for user error */
+    spawn_centered_text(game, "REQUIERE SUPERPOSICION", PURPLE);
     return false;
   }
 
   float success_chance = tunnel->success_probability;
 
+  /* Dev Fix: Increase base success rate to avoid frustration */
+  if (success_chance < 0.9f) {
+    success_chance = 0.95f;
+  }
+
   for (int i = 0; i < MAX_ITEMS; i++) {
     if (game->items[i].kind == ITEM_STABILIZER) {
-      success_chance = 0.75f;
+      success_chance = 1.0f; /* Stabilizer guarantees tunnel */
       break;
     }
   }
@@ -589,13 +598,15 @@ bool attempt_quantum_tunnel(GameState *game, int tunnel_idx) {
   if (random_val < success_chance) {
     player->position = ivec2_add(tunnel->position, tunnel->target_offset);
     spawn_spark_effect(game, player->position, PURPLE);
+    PlayAudioSound(teleport_sound); /* Ensure sound plays on success */
     return true;
   } else {
     player->is_stuck = true;
     player->stuck_turns = 2;
-    player->coherence.current -= 20.0f;
+    player->coherence.current -= 10.0f; /* Reduced penalty */
     tunnel->last_failed = true;
     spawn_spark_effect(game, player->position, RED);
+    spawn_centered_text(game, "TUNELIG FALLIDO", RED);
     return false;
   }
 }

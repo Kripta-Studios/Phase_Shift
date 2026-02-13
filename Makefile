@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3
+CFLAGS = -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3 -fno-stack-protector -U_FORTIFY_SOURCE
 LDFLAGS = -L. -lraylib -lopengl32 -lgdi32 -lwinmm -lole32 -lwininet
 
 SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c src/menus.c src/persistence.c src/atmosphere.c src/quantum.c src/audio.c src/qiskit.c

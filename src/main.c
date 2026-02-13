@@ -359,16 +359,6 @@ int main(void) {
       float offset_y = (float)(rand() % 10 - 5) * game.screen_shake;
       game.camera.target.x -= offset_x;
       game.camera.target.y -= offset_y;
-      // Nota: ¿Modificamos cámara temporalmente? ¿O reiniciar?
-      // BeginMode2D aplica la matriz. Modificar 'game.camera' aquí
-      // ¿persiste? Sí. Deberíamos reiniciarla o usar cámara temporal.
-      // De hecho, la lógica actualiza el objetivo para seguir al jugador.
-      // ¿Si lo modificamos aquí, la lógica lo sobrescribe el siguiente frame?
-      // ¿Lógica actualiza cámara en bucle de actualización?
-      // Comprobemos dónde se actualiza la cámara.
-      // Úsualmente 'update_camera(&game)'.
-      // Si la lógica sobrescribe, podemos modificar justo antes de BeginMode2D
-      // y confiar que la lógica lo resetee. PERO la lógica podría correr ANTES.
     }
 
     if (game.state_kind == GAME_STATE_MAIN_MENU) {

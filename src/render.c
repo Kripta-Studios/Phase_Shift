@@ -176,8 +176,6 @@ void render_game_cells(GameState *game) {
                        arrow_col);
         }
       } else if (cell == CELL_DECOHERENCE_ZONE) {
-        // Superposición púrpura semi-transparente con ruido aleatorio ¿en el
-        // futuro?
         DrawRectangleV(pos, (Vector2){CELL_SIZE, CELL_SIZE},
                        Fade(PURPLE, 0.3f));
         // Dibujar algunas líneas/puntos "estáticos"

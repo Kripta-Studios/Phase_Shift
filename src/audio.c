@@ -1,3 +1,6 @@
+#define MA_NO_JACK
+#define MA_NO_ALSA
+#define MA_NO_PULSEAUDIO
 #define MINIAUDIO_IMPLEMENTATION
 #include "audio.h"
 #include "miniaudio.h"
