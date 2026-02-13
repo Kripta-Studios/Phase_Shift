@@ -772,11 +772,11 @@ void init_intro_dialogs(GameState *game) {
   strncpy(d->pages[4].text,
           "Vigila tu medidor de COHERENCIA.\n"
           "Si llega al 0%, te disolveras.\n\n"
-          "NOTA TECNICA:\n"
-          "Los tuneles cuanticos y la superposicion\n"
-          "usan circuitos reales de Qiskit para\n"
-          "determinar probabilidades de exito.\n\n"
-          "Buena suerte.",
+          "CONEXION QISKIT: ESTABLE\n"
+          "Los tuneles y la superposicion usan circuitos\n"
+          "cuanticos reales (IBM Qiskit) para calcular\n"
+          "las probabilidades de colapso.\n\n"
+          "Buena suerte, Sujeto 44.",
           MAX_DIALOG_TEXT);
 }
 
@@ -824,18 +824,20 @@ void show_level_dialog(GameState *game) {
   case 3:
     strncpy(d->pages[0].text,
             "COMPUERTA HADAMARD\n\n"
-            "Dos botones cercanos (distancia 5 mov).\n"
-            "Ambos deben pulsarse a la vez.\n\n"
-            "1. Ve al boton de ARRIBA\n"
-            "2. Activa SUPERPOSICION [ESPACIO]\n"
-            "3. Espera [T] y corre al de ABAJO\n"
-            "4. Tu eco mantiene el primero pulsado",
+            "Dos botones activan el muro rojo (izq).\n"
+            "La LLAVE esta aislada en la esquina sup-izq.\n\n"
+            "1. Ve a la IZQUIERDA (Botones)\n"
+            "2. Activa SUPERPOSICION [ESPACIO] sobre un boton\n"
+            "3. Espera [T] y corre al otro boton\n"
+            "4. El muro rojo se abrira\n"
+            "5. Recoge la llave y sal por la derecha.",
             MAX_DIALOG_TEXT);
     break;
   case 4:
     strncpy(d->pages[0].text,
             "ALGORITMO DE GROVER\n\n"
-            "Laberinto denso. Llave en esquina sup-derecha.\n\n"
+            "Laberinto denso. Llave en esquina sup-izq.\n"
+            "La salida esta confinada por puertas azules.\n\n"
             "- Cambia fase para cruzar aperturas de color\n"
             "- Detector ROJO solo ve fase ROJA\n"
             "- Detector AZUL solo ve fase AZUL\n"
@@ -848,13 +850,12 @@ void show_level_dialog(GameState *game) {
             "TELETRANSPORTE CUANTICO\n\n"
             "Tres zonas aisladas. Solo TUNELES CUANTICOS\n"
             "(zonas purpuras) conectan las zonas.\n\n"
-            "COMO TUNELIZAR:\n"
+            "COMO TUNELIZAR (Probabilidad Qiskit):\n"
             "1. Entra en la zona PURPURA\n"
             "2. Activa SUPERPOSICION [ESPACIO]\n"
-            "3. 50%% de exito. Si fallas, reintenta\n\n"
+            "3. 50% de exito calculado por circuito cuantico\n\n"
             "OJO: Un guardia espera en la zona 2.\n"
-            "El boton rojo abre barricadas a zona 3.\n"
-            "Llave en zona 2, salida en zona 3.",
+            "La salida esta rodeada de puertas azules.",
             MAX_DIALOG_TEXT);
     break;
   case 6:
@@ -873,7 +874,8 @@ void show_level_dialog(GameState *game) {
   case 7:
     strncpy(d->pages[0].text,
             "SUPREMACIA CUANTICA\n\n"
-            "Prueba final: todas las mecanicas combinadas.\n\n"
+            "Prueba final: todas las mecanicas combinadas.\n"
+            "La salida esta fuertemente protegida.\n\n"
             "ZONA 1: Laberinto de fase (cambia fase)\n"
             "ZONA 2: Detectores + 2 botones (usa eco)\n"
             "ZONA 3: Tunel cuantico + llave\n\n"
@@ -881,7 +883,6 @@ void show_level_dialog(GameState *game) {
             "que encierra al enemigo si se queda atascado.\n"
             "- Cruza el laberinto alternando fases\n"
             "- Usa un ECO para un boton\n"
-            "- Pisa el otro boton para abrir barrera\n"
             "- Tuneliza para alcanzar la llave final\n\n"
             "Buena suerte, Sujeto 44.",
             MAX_DIALOG_TEXT);
@@ -1038,7 +1039,8 @@ void show_level_dialog(GameState *game) {
   case 19:
     strncpy(d->pages[0].text,
             "FINAL CUANTICO\n\n"
-            "Bienvenido al nucleo del procesador.\n\n"
+            "Bienvenido al nucleo del procesador.\n"
+            "INICIO DE SISTEMA: FASE AZUL FORZADA.\n\n"
             "OBJETIVO: Recolectar 3 LLAVES de seguridad.\n"
             "AMENAZAS:\n"
             "- Lasers de Alta Energia (-40 Coherencia)\n"
