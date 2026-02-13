@@ -1728,17 +1728,10 @@ void load_level_20(GameState *game) {
   /* Island 2 (Central) - STRICTLY ENCLOSED */
   for (int x = 16; x < 24; x++) {
     for (int y = 4; y < rows - 4; y++) {
-      /* Walls around Island 2 (x=16, x=23, y=4, y=19) */
-      if (x == 16 || x == 23 || y == 4 || y == rows - 5) {
-        /* Openings for Doors at (23,6) and (23,18) so they match x=24 Doors */
-        if (x == 23 && (y == 6 || y == 18)) {
-          game->map->data[y][x] = CELL_FLOOR;
-        } else {
-          game->map->data[y][x] = CELL_WALL;
-        }
-      } else {
+      if (x == 16 || x == 23 || y == 4 || y == rows - 5)
+        game->map->data[y][x] = CELL_WALL; // Solid walls around Island 2
+      else
         game->map->data[y][x] = CELL_FLOOR;
-      }
     }
   }
 
@@ -1747,25 +1740,27 @@ void load_level_20(GameState *game) {
   spawn_tunnel(game, ivec2(10, rows / 2), ivec2(2, 2), ivec2(8, 0));
 
   /* SECTION 3: The Collapse (Final Gauntlet) */
-  /* Wall separating Sec 2 & 3 */
+  /* Wall separating Sec 2 & 3 - SOLID (Forces Portal) */
   for (int y = 0; y < rows; y++)
     game->map->data[y][24] = CELL_WALL;
 
-  // Door 2 and Door 3 block access to the Exit area
-  game->map->data[6][24] = CELL_DOOR;  // Door 2 (Top)
-  game->map->data[18][24] = CELL_DOOR; // Door 3 (Bottom)
-
-  /* Walls inside Sec 3 to force pathing */
+  /* Walls inside Sec 3 to force pathing (Top vs Bottom) */
   for (int x = 24; x < cols; x++) {
     game->map->data[12][x] = CELL_WALL; // Split Sec 3 into Top/Bottom
   }
 
-  // Make Exit accessible only from the merge point
-  game->map->data[12][cols - 3] = CELL_FLOOR;
-  game->map->data[12][cols - 2] = CELL_FLOOR; // Clear path to Exit
+  // Door connecting Top Sec 3 to Bottom Sec 3 (Requires Key 2)
+  game->map->data[12][26] = CELL_DOOR;
+
+  // Final Door blocking Exit (Requires Key 3)
+  game->map->data[12][30] = CELL_DOOR;
+
+  // Make Exit accessible behind Final Door
+  game->map->data[12][31] = CELL_EXIT;
+  game->exit_position = ivec2(31, 12);
 
   /* Portals: Island 2 -> Sec 3 */
-  // Portal 0 (Source) links to 1. Portal 1 (Dest) links to 0.
+  // Portal 0 (Source) links to 1.
   // Source: Inside Island 2 (20, 8)
   spawn_portal(game, ivec2(20, 8), 1, PHASE_BLUE);
 
@@ -1775,9 +1770,8 @@ void load_level_20(GameState *game) {
   /* HAZARDS */
   /* Lasers (Drain 40 Coherence) */
   spawn_detector(game, ivec2(14, 2), DIR_DOWN, PHASE_RED);
-  spawn_detector(game, ivec2(22, 20), DIR_UP,
-                 PHASE_BLUE); // Below Island 2
-  // Adjust positions to be valid
+  spawn_detector(game, ivec2(22, 20), DIR_UP, PHASE_BLUE); // Below Island 2
+
   spawn_detector(game, ivec2(26, 10), DIR_LEFT, PHASE_RED);
   spawn_detector(game, ivec2(28, 14), DIR_RIGHT, PHASE_BLUE);
 
@@ -1790,38 +1784,19 @@ void load_level_20(GameState *game) {
   // Key 1: In Section 1 Mesh (Required for Door 1)
   allocate_item(game, ivec2(8, 4), ITEM_KEY);
 
-  // Key 2: In Island 2 (Required for Door 2)
-  // MOVED: Lower part, attached to wall, inside
-  allocate_item(game, ivec2(22, 18), ITEM_KEY);
+  // Key 2: In Island 2 (Required for Door at 26,12)
+  allocate_item(game, ivec2(22, 18), ITEM_KEY); // Move Key 2
 
-  // Key 3: In Section 3 Bottom (Required for Door 3 which might be optional or
-  // sequential?) Actually, let's make 3 Doors sequential or blocking specific
-  // items. Current Doors: Door 1 (12,12) -> Access to Tunnel/Void. Needs Key 1.
-  // Door 2 (24,6) -> Access to Sec 3 Top (Exit path). Needs Key 2.
-  // Door 3 (24,18) -> Access to Sec 3 Bottom?
-
-  // Let's hide Key 3 in Sec 3 Bottom, accessed via... phase wall?
-  // Or make Door 3 lead to Key 3?
-
-  // BETTER LAYOUT:
-  // Exit is at (30, 12).
-  // Sec 3 Wall at x=24.
-  // Portal lands at (26, 4) (Sec 3 Top).
-  // To get to Exit, must cross from Top to Bottom?
-  // Or remove Door 3?
-
-  // Let's put Key 3 in Sec 3 Top.
-  // And Door 3 blocks the actual Exit at (29, 12)?
-  game->map->data[12][29] = CELL_DOOR;         // Final Door before Exit
-  allocate_item(game, ivec2(28, 2), ITEM_KEY); // Key 3 (Deep in Sec 3 Top)
+  // Key 3: In Sec 3 Bottom (Required for Final Door at 30,12)
+  allocate_item(game, ivec2(28, 20), ITEM_KEY); // Move Key 3 to Bottom
 
   /* EXTRAS */
   allocate_item(game, ivec2(6, 20), ITEM_BOMB_REFILL);
   allocate_item(game, ivec2(18, 10), ITEM_COHERENCE_PICKUP);
 
-  /* EXIT */
-  game->exit_position = ivec2(cols - 1, rows / 2);
-  game->map->data[rows / 2][cols - 1] = CELL_EXIT;
+  /* EXIT is set above */
+  // game->exit_position = ivec2(cols - 1, rows / 2);
+  // game->map->data[rows / 2][cols - 1] = CELL_EXIT;
 
   game->player.position = ivec2(2, rows / 2);
   game->player.bombs = 3;
