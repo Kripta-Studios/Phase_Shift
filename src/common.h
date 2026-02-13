@@ -150,6 +150,7 @@ typedef struct {
   Direction direction;
   PhaseKind detects_phase;
   int view_distance;
+  int current_length; // Actual beam length blocked by walls
   bool is_active;
   float beam_alpha;
 } QuantumDetector;

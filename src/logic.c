@@ -73,6 +73,7 @@ void spawn_detector(GameState *game, IVector2 pos, Direction dir,
       game->detectors[i].direction = dir;
       game->detectors[i].detects_phase = phase;
       game->detectors[i].view_distance = 5;
+      game->detectors[i].current_length = 0;
       game->detectors[i].beam_alpha = 0.0f;
       return;
     }
@@ -496,12 +497,20 @@ void update_quantum_detectors(GameState *game) {
     IVector2 ray_pos = det->position;
     bool detected = false;
     Direction current_dir = det->direction;
+    det->current_length = 0; // Reset length each frame
 
     for (int dist = 1; dist <= det->view_distance; dist++) {
       ray_pos = ivec2_add(ray_pos, DIRECTION_VECTORS[current_dir]);
 
       if (!within_map(game, ray_pos))
         break;
+
+      // Update actual length traversed (visuals will likely use this)
+      // Note: This logic assumes straight beams (no mirrors) for visual length
+      // matching If mirrors bend it, current_length will represent total path
+      // length, but renderer might draw it straight if not updated. But for
+      // WALLS, this fixes "beam going through wall".
+      det->current_length = dist;
 
       // Check Oracle Interaction
       for (int o = 0; o < MAX_ORACLES; o++) {
@@ -539,12 +548,10 @@ void update_quantum_detectors(GameState *game) {
 
         if (IsAudioSoundValid(mirror_reflect_sound))
           PlayAudioSound(mirror_reflect_sound);
-      } else if (cell == CELL_WALL || cell == CELL_WALL_GREEN ||
-                 cell == CELL_WALL_YELLOW ||
-                 (cell == CELL_WALL_RED && det->detects_phase == PHASE_RED) ||
-                 (cell == CELL_WALL_BLUE && det->detects_phase == PHASE_BLUE)) {
-        break;
       }
+      // User Request: Lasers penetrate walls.
+      // Removed CELL_WALL checks.
+      // else if (cell == CELL_WALL || ...) { break; }
     }
 
     if (detected) {

@@ -368,11 +368,11 @@ void render_quantum_effects(GameState *game) {
       continue;
 
     // Draw Beam
-    if (det->view_distance > 0) {
+    if (det->current_length > 0) {
       IVector2 start = det->position;
       IVector2 end =
           ivec2_add(start, ivec2_scale(DIRECTION_VECTORS[det->direction],
-                                       det->view_distance));
+                                       det->current_length));
 
       Vector2 p1 = vec2_scale(ivec2_to_vec2(start), CELL_SIZE);
       Vector2 p2 = vec2_scale(ivec2_to_vec2(end), CELL_SIZE);
