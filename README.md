@@ -302,6 +302,30 @@ gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o phase_shift.exe \
 
 ---
 
+## 🔨 Compilación
+
+**Requisitos previos:** GCC, Make y [Raylib](https://www.raylib.com/).
+* **Windows:** Instala [MSYS2](https://www.msys2.org/) (entorno UCRT64) y ejecuta: `pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make binutils`
+* **Linux:** Instala las dependencias con: `sudo apt install build-essential libgl1-mesa-dev libx11-dev`
+
+Abre tu terminal en la raíz del proyecto y usa los siguientes comandos:
+
+### 🐛 Modo Desarrollo (Debug)
+Compila el ejecutable rápidamente con la consola de fondo activa:
+```bash
+make
+```
+
+### Modo Release
+Compila el ejecutable con optimizaciones:
+```bash
+make release
+```
+```bash
+make release-linux
+```
+---
+
 ## 🎵 Créditos
 
 - **Motor**: [Raylib](https://www.raylib.com/) by Ramon Santamaria
