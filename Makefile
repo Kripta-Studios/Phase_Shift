@@ -30,5 +30,20 @@ $(EXEC): $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
+ifeq ($(OS),Windows_NT)
 	-cmd //C "del /Q $(subst /,\,$(OBJ)) phase_shift.o $(EXEC)"
+else
+	rm -f $(OBJ) phase_shift.o $(EXEC) phase_shift
+endif
 
+
+# Linux Release Target
+release-linux: LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+release-linux: EXEC = phase_shift
+release-linux: clean $(OBJ)
+	$(CC) $(OBJ) -o $(EXEC) $(LDFLAGS)
+	mkdir -p release-linux/assets
+	cp $(EXEC) release-linux/
+	cp /usr/local/lib/libraylib.so* release-linux/ || echo "Warning: libraylib.so not found in /usr/local/lib"
+	cp icon.png release-linux/assets/
+	cp -r assets/* release-linux/assets/

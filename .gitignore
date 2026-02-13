@@ -13,3 +13,5 @@ release/
 *.dll
 RELEASE.md
 *.txt
+release-linux/
+raylib/

@@ -505,11 +505,6 @@ void update_quantum_detectors(GameState *game) {
       if (!within_map(game, ray_pos))
         break;
 
-      // Actualizar longitud real recorrida (lo visual usará esto)
-      // Nota: asume rayos rectos (sin espejos) para longitud visual
-      // Si espejos lo doblan, current_length será la ruta total
-      // pero el render podría dibujarlo recto si no se actualiza.
-      // Para PAREDES, esto arregla "rayo atravesando pared".
       det->current_length = dist;
 
       // Comprobar interacción con Oráculo
@@ -589,7 +584,7 @@ bool attempt_quantum_tunnel(GameState *game, int tunnel_idx) {
     }
   }
 
-  float random_val = (float)(rand() % 100) / 100.0f;
+  float random_val = qiskit_random_float();
 
   if (random_val < success_chance) {
     player->position = ivec2_add(tunnel->position, tunnel->target_offset);

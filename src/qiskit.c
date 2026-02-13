@@ -15,8 +15,10 @@
 #define QISKIT_ENDPOINT "/generate_bit"
 #define QISKIT_TIMEOUT_MS 2000
 
+#ifdef _WIN32
 static HINTERNET h_internet = NULL;
 static HINTERNET h_connect = NULL;
+#endif
 static bool last_connected = false;
 
 void qiskit_init(void) {
