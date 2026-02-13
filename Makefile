@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall -Wno-missing-braces -I. -Isrc -O3
-LDFLAGS = -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+LDFLAGS = -L. -lraylib -lopengl32 -lgdi32 -lwinmm -lole32
 
-SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c src/menus.c src/persistence.c src/atmosphere.c src/quantum.c
+SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c src/menus.c src/persistence.c src/atmosphere.c src/quantum.c src/audio.c
 OBJ = $(SRC:.c=.o)
 EXEC = phase_shift.exe
 

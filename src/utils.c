@@ -4,29 +4,29 @@
 // Global Definitions
 Color PALETTE[25];
 const IVector2 DIRECTION_VECTORS[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-Sound footstep_sounds[4];
-Sound blast_sound;
-Sound key_pickup_sound;
-Sound bomb_pickup_sound;
-Sound checkpoint_sound;
-Sound phase_shift_sound;
-Music ambient_music;
+AudioSound footstep_sounds[4];
+AudioSound blast_sound;
+AudioSound key_pickup_sound;
+AudioSound bomb_pickup_sound;
+AudioSound checkpoint_sound;
+AudioSound phase_shift_sound;
+AudioMusic ambient_music;
 Font game_font;
 
 // New sound globals
-Sound teleport_sound;
-Sound measurement_sound;
-Sound entangle_sound;
-Sound qubit_rotate_sound;
-Sound oracle_sound;
-Sound ice_slide_sound;
-Sound mirror_reflect_sound;
-Sound decoherence_sound;
-Sound portal_activate_sound;
-Sound level_complete_sound;
-Sound guard_step_sound;
-Sound open_door_sound;
-Sound plant_bomb_sound;
+AudioSound teleport_sound;
+AudioSound measurement_sound;
+AudioSound entangle_sound;
+AudioSound qubit_rotate_sound;
+AudioSound oracle_sound;
+AudioSound ice_slide_sound;
+AudioSound mirror_reflect_sound;
+AudioSound decoherence_sound;
+AudioSound portal_activate_sound;
+AudioSound level_complete_sound;
+AudioSound guard_step_sound;
+AudioSound open_door_sound;
+AudioSound plant_bomb_sound;
 Texture2D title_icon;
 
 IVector2 ivec2(int x, int y) { return (IVector2){x, y}; }

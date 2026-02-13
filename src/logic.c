@@ -230,6 +230,7 @@ void kill_player(GameState *game) {
   game->player.death_time = GetTime();
   game->screen_shake = 2.0f;
   game->flash_intensity = 1.0f;
+  PlayAudioSound(blast_sound);
 }
 
 void flood_fill(GameState *game, IVector2 start, Cell fill) {
@@ -366,7 +367,7 @@ void handle_phase_change(GameState *game) {
 
   phase->current_phase = next;
   game->player.phase_shifts++;
-  PlaySound(phase_shift_sound);
+  PlayAudioSound(phase_shift_sound);
 }
 
 void handle_superposition(GameState *game) {
@@ -411,9 +412,8 @@ void update_coherence(GameState *game) {
   // Decoherence Zone: Rapid decay
   if (cell == CELL_DECOHERENCE_ZONE) {
     coh->current -= 2.0f; // Extra penalty per turn
-    if (decoherence_sound.stream.buffer != NULL &&
-        ((int)coh->current % 10 == 0)) {
-      PlaySound(decoherence_sound);
+    if (IsAudioSoundValid(decoherence_sound) && ((int)coh->current % 10 == 0)) {
+      PlayAudioSound(decoherence_sound);
     }
   }
 
@@ -423,7 +423,7 @@ void update_coherence(GameState *game) {
       game->player.phase_system.state = PHASE_STATE_STABLE;
       game->player.phase_system.superposition_turns_left = 0;
       game->player.measurements_made++;
-      PlaySound(measurement_sound);
+      PlayAudioSound(measurement_sound);
       // Collapse to... random? Or current?
       // Superposition usually means we are in both.
       // Let's say we collapse to the phase we initiated it from, or random.
@@ -508,8 +508,8 @@ void update_quantum_detectors(GameState *game) {
             if (!oracle->active) {
               oracle->active = true;
               oracle->query_count++;
-              if (oracle_sound.stream.buffer != NULL)
-                PlaySound(oracle_sound);
+              if (IsAudioSoundValid(oracle_sound))
+                PlayAudioSound(oracle_sound);
             }
           }
         }
@@ -534,8 +534,8 @@ void update_quantum_detectors(GameState *game) {
         else if (current_dir == DIR_UP)
           current_dir = DIR_RIGHT;
 
-        if (mirror_reflect_sound.stream.buffer != NULL)
-          PlaySound(mirror_reflect_sound);
+        if (IsAudioSoundValid(mirror_reflect_sound))
+          PlayAudioSound(mirror_reflect_sound);
       } else if (cell == CELL_WALL || cell == CELL_WALL_GREEN ||
                  cell == CELL_WALL_YELLOW ||
                  (cell == CELL_WALL_RED && det->detects_phase == PHASE_RED) ||
@@ -549,6 +549,7 @@ void update_quantum_detectors(GameState *game) {
       player->phase_system.state = PHASE_STATE_STABLE;
       player->phase_system.phase_lock_turns = 5;
       player->coherence.current -= 40.0f;
+      PlayAudioSound(blast_sound);
 
       det->beam_alpha = 1.0f;
     } else {
@@ -644,6 +645,7 @@ void game_player_turn(GameState *game, Direction dir) {
                                in_superposition)) {
     player->position = new_pos;
     player->steps_taken++;
+    PlayAudioSound(footstep_sounds[rand() % 4]);
 
     // ICE LOGIC: Slide until hit something solid or non-ice
     if (cell == CELL_ICE) {
@@ -665,7 +667,7 @@ void game_player_turn(GameState *game, Direction dir) {
         if (is_cell_solid_for_phase(next_cell,
                                     player->phase_system.current_phase,
                                     in_superposition)) {
-          PlaySound(ice_slide_sound);
+          PlayAudioSound(ice_slide_sound);
           break; // Stop sliding
         }
 
@@ -674,7 +676,7 @@ void game_player_turn(GameState *game, Direction dir) {
         // the floor.
         slide_pos = next_slide;
         if (next_cell != CELL_ICE) {
-          PlaySound(ice_slide_sound);
+          PlayAudioSound(ice_slide_sound);
           break; // Slid onto floor/other
         }
       }
@@ -692,14 +694,14 @@ void game_player_turn(GameState *game, Direction dir) {
       case ITEM_KEY:
         player->keys++;
         item->kind = ITEM_NONE;
-        PlaySound(key_pickup_sound);
+        PlayAudioSound(key_pickup_sound);
         spawn_spark_effect(game, item->position, YELLOW);
         break;
       case ITEM_BOMB_REFILL:
         if (player->bombs < player->bomb_slots && item->cooldown <= 0) {
           player->bombs++;
           item->cooldown = 10;
-          PlaySound(bomb_pickup_sound);
+          PlayAudioSound(bomb_pickup_sound);
           spawn_spark_effect(game, item->position, RED);
         }
         break;
@@ -708,14 +710,14 @@ void game_player_turn(GameState *game, Direction dir) {
         player->bomb_slots++;
         player->bombs = player->bomb_slots;
         // Add sound?
-        PlaySound(key_pickup_sound);
+        PlayAudioSound(key_pickup_sound);
         spawn_spark_effect(game, item->position, ORANGE);
         break;
       case ITEM_CHECKPOINT:
         item->kind = ITEM_NONE;
         player->bombs = player->bomb_slots;
         player->coherence.current = 100.0f;
-        PlaySound(checkpoint_sound);
+        PlayAudioSound(checkpoint_sound);
         spawn_spark_effect(game, item->position, GREEN);
         break;
       case ITEM_COHERENCE_PICKUP:
@@ -738,15 +740,15 @@ void game_player_turn(GameState *game, Direction dir) {
         } else {
           game->player.phase_system.yellow_unlocked = true;
         }
-        PlaySound(key_pickup_sound);
+        PlayAudioSound(key_pickup_sound);
         break;
       case ITEM_QUBIT:
         item->kind = ITEM_NONE;
         if (game->player.qubit_count < MAX_QUBITS) {
           init_qubit(&game->player.qubits[game->player.qubit_count]);
           game->player.qubit_count++;
-          if (qubit_rotate_sound.stream.buffer != NULL)
-            PlaySound(qubit_rotate_sound);
+          if (IsAudioSoundValid(qubit_rotate_sound))
+            PlayAudioSound(qubit_rotate_sound);
           spawn_spark_effect(game, item->position, SKYBLUE);
         }
         break;
@@ -760,7 +762,7 @@ void game_player_turn(GameState *game, Direction dir) {
       case ITEM_TELEPORT_DEVICE:
         item->kind = ITEM_NONE;
         game->has_teleport_device = true;
-        PlaySound(key_pickup_sound);
+        PlayAudioSound(key_pickup_sound);
         spawn_spark_effect(game, item->position, MAGENTA);
         break;
       case ITEM_PHASE_LOCK:
@@ -776,7 +778,7 @@ void game_player_turn(GameState *game, Direction dir) {
       player->keys--;
       flood_fill(game, new_pos, CELL_FLOOR);
       player->position = new_pos;
-      PlaySound(open_door_sound);
+      PlayAudioSound(open_door_sound);
     }
   }
 
@@ -799,7 +801,8 @@ void game_player_turn(GameState *game, Direction dir) {
     player->recording_frame++;
   }
 
-  PlaySound(footstep_sounds[rand() % 4]);
+  printf("[AUDIO] Playing footstep sound\n");
+  PlayAudioSound(footstep_sounds[rand() % 4]);
 }
 
 void game_bombs_turn(GameState *game) {
@@ -811,7 +814,7 @@ void game_bombs_turn(GameState *game) {
     if (game->bombs[i].countdown > 0) {
       game->bombs[i].countdown--;
       if (game->bombs[i].countdown <= 0) {
-        PlaySound(blast_sound);
+        PlayAudioSound(blast_sound);
         explode(game, game->bombs[i].position);
       }
     }
@@ -917,7 +920,7 @@ void game_colapsores_turn(GameState *game) {
 
           if (count > 0) {
             colapsor->position = best_moves[rand() % count];
-            PlaySound(guard_step_sound);
+            PlayAudioSound(guard_step_sound);
           }
 
           colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN;
@@ -1062,8 +1065,8 @@ void handle_entangle_action(GameState *game) {
   }
 
   if (any_entangled) {
-    if (entangle_sound.stream.buffer != NULL)
-      PlaySound(entangle_sound);
+    if (IsAudioSoundValid(entangle_sound))
+      PlayAudioSound(entangle_sound);
   }
 }
 
@@ -1095,7 +1098,7 @@ void execute_turn(GameState *game, Command cmd) {
     game_player_turn(game, cmd.dir);
   } else if (cmd.kind == CMD_PLANT) {
     handle_plant_bomb(game);
-    PlaySound(plant_bomb_sound);
+    PlayAudioSound(plant_bomb_sound);
     spawn_spark_effect(game, game->player.position, ORANGE);
   } else if (cmd.kind == CMD_PHASE_CHANGE) {
     handle_phase_change(game);
@@ -1111,8 +1114,8 @@ void execute_turn(GameState *game, Command cmd) {
     spawn_spark_effect(game, game->player.position, GREEN);
   } else if (cmd.kind == CMD_WAIT) {
     if (game->player.phase_system.state == PHASE_STATE_SUPERPOSITION) {
-      SetSoundPitch(phase_shift_sound, 0.5f);
-      PlaySound(phase_shift_sound);
+      SetAudioSoundPitch(phase_shift_sound, 0.5f);
+      PlayAudioSound(phase_shift_sound);
     }
     if (game->player.is_recording_echo &&
         game->player.recording_frame < MAX_ECHO_FRAMES) {
@@ -1135,7 +1138,7 @@ void execute_turn(GameState *game, Command cmd) {
 
   for (int i = 0; i < MAX_TUNNELS; i++) {
     if (attempt_quantum_tunnel(game, i)) {
-      PlaySound(phase_shift_sound);
+      PlayAudioSound(teleport_sound);
       break;
     }
   }

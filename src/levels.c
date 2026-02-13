@@ -409,7 +409,7 @@ void load_level_7(GameState *game) {
   /* Corredor SUPERIOR: Muros de fase + GUARDIA */
   for (int x = 7; x < cols - 5; x += 3)
     game->map->data[3][x] = CELL_WALL_RED;
-  spawn_guard(game, ivec2(cols - 7, 3)); /* Guardia esperando al final */
+  spawn_guard(game, ivec2(cols - 9, 3)); /* Guardia esperando al final */
 
   /* Corredor MEDIO: GUARDIA + Detector */
   spawn_guard(game, ivec2(12, 8));
@@ -950,7 +950,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed) {
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
       }
     }
   }
@@ -977,7 +977,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed) {
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
       }
     }
   }
@@ -1001,7 +1001,7 @@ void check_level_events(GameState *game) {
           game->map->data[y][19] = CELL_FLOOR;
         }
       }
-      PlaySound(phase_shift_sound);
+      PlayAudioSound(phase_shift_sound);
     }
   }
 
@@ -1025,7 +1025,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed) {
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
       }
     }
   }
@@ -1048,7 +1048,7 @@ void check_level_events(GameState *game) {
           game->map->data[y][18] = CELL_FLOOR;
         }
       }
-      PlaySound(phase_shift_sound);
+      PlayAudioSound(phase_shift_sound);
     }
   }
 
@@ -1074,7 +1074,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed) {
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
       }
     }
   }
@@ -1099,7 +1099,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed)
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
     }
   }
 
@@ -1123,7 +1123,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed)
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
     }
   }
 
@@ -1149,7 +1149,7 @@ void check_level_events(GameState *game) {
         }
       }
       if (was_closed)
-        PlaySound(phase_shift_sound);
+        PlayAudioSound(phase_shift_sound);
     }
   }
 }

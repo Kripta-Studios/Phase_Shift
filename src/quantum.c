@@ -31,8 +31,8 @@ void apply_hadamard_gate(Qubit *q) {
   q->beta_real = new_beta_r;
   q->beta_imag = new_beta_i;
 
-  if (qubit_rotate_sound.stream.buffer != NULL) {
-    PlaySound(qubit_rotate_sound);
+  if (IsAudioSoundValid(qubit_rotate_sound)) {
+    PlayAudioSound(qubit_rotate_sound);
   }
 }
 
@@ -49,8 +49,8 @@ void apply_pauli_x_gate(Qubit *q) {
   q->beta_real = temp_r;
   q->beta_imag = temp_i;
 
-  if (qubit_rotate_sound.stream.buffer != NULL) {
-    PlaySound(qubit_rotate_sound);
+  if (IsAudioSoundValid(qubit_rotate_sound)) {
+    PlayAudioSound(qubit_rotate_sound);
   }
 }
 
@@ -114,8 +114,8 @@ void measure_qubit(Qubit *q) {
 
   q->is_measured = true;
 
-  if (measurement_sound.stream.buffer != NULL) {
-    PlaySound(measurement_sound);
+  if (IsAudioSoundValid(measurement_sound)) {
+    PlayAudioSound(measurement_sound);
   }
 }
 
@@ -190,8 +190,8 @@ void handle_portal_teleport(GameState *game) {
     game->player.position = game->portals[dest_idx].position;
     // Optional: consume 1 turn or just move instant?
     // Let's make it instant but play sound/effect
-    if (teleport_sound.stream.buffer != NULL) {
-      PlaySound(teleport_sound);
+    if (IsAudioSoundValid(teleport_sound)) {
+      PlayAudioSound(teleport_sound);
     }
   }
 }

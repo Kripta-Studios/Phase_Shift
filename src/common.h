@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "audio.h"
 #include "raylib.h"
 #include <math.h>
 #include <stdbool.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -398,29 +400,29 @@ typedef struct {
 // Global Externs
 extern Color PALETTE[25];
 extern const IVector2 DIRECTION_VECTORS[];
-extern Sound footstep_sounds[4];
-extern Sound blast_sound;
-extern Sound key_pickup_sound;
-extern Sound bomb_pickup_sound;
-extern Sound checkpoint_sound;
-extern Sound phase_shift_sound;
-extern Music ambient_music;
+extern AudioSound footstep_sounds[4];
+extern AudioSound blast_sound;
+extern AudioSound key_pickup_sound;
+extern AudioSound bomb_pickup_sound;
+extern AudioSound checkpoint_sound;
+extern AudioSound phase_shift_sound;
+extern AudioMusic ambient_music;
 extern Font game_font;
 
 // New sound externs
-extern Sound teleport_sound;
-extern Sound measurement_sound;
-extern Sound entangle_sound;
-extern Sound qubit_rotate_sound;
-extern Sound oracle_sound;
-extern Sound ice_slide_sound;
-extern Sound mirror_reflect_sound;
-extern Sound decoherence_sound;
-extern Sound portal_activate_sound;
-extern Sound level_complete_sound;
-extern Sound guard_step_sound;
-extern Sound open_door_sound;
-extern Sound plant_bomb_sound;
+extern AudioSound teleport_sound;
+extern AudioSound measurement_sound;
+extern AudioSound entangle_sound;
+extern AudioSound qubit_rotate_sound;
+extern AudioSound oracle_sound;
+extern AudioSound ice_slide_sound;
+extern AudioSound mirror_reflect_sound;
+extern AudioSound decoherence_sound;
+extern AudioSound portal_activate_sound;
+extern AudioSound level_complete_sound;
+extern AudioSound guard_step_sound;
+extern AudioSound open_door_sound;
+extern AudioSound plant_bomb_sound;
 
 extern Texture2D title_icon;
 

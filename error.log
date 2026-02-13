@@ -1,0 +1,14 @@
+In file included from src/common.h:5,
+                 from src/main.c:2:
+src/raylib.h:106:9: note: '#pragma message: USING SRC/RAYLIB.H V5.5'
+  106 | #pragma message("USING SRC/RAYLIB.H V5.5")
+      |         ^~~~~~~
+src/main.c: In function 'main':
+src/main.c:210:21: error: incompatible type for argument 1 of 'PlaySound'
+  210 |           PlaySound(level_complete_sound);
+      |                     ^~~~~~~~~~~~~~~~~~~~
+      |                     |
+      |                     AudioSound
+src/raylib.h:2468:28: note: expected 'Sound' but argument is of type 'AudioSound'
+ 2468 | RLAPI void PlaySound(Sound sound);      // Play a sound
+      |                      ~~~~~~^~~~~

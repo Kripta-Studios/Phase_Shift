@@ -1,6 +1,6 @@
+#include "audio.h"
 #include "common.h"
 #include "levels.h"
-#include "logic.h"
 #include "persistence.h"
 #include "render.h"
 #include "utils.h"
@@ -27,50 +27,71 @@ int main(void) {
   ToggleFullscreen();
   SetTargetFPS(144);
 
-  InitAudioDevice();
+  InitAudioSystem();
   SetMasterVolume(1.0f);
 
   /* Load assets */
   for (int i = 0; i < 4; i++) {
-    footstep_sounds[i] = LoadSound("assets/sounds/footsteps.mp3");
-    SetSoundPitch(footstep_sounds[i], 1.7f - i * 0.1f);
+    footstep_sounds[i] = LoadAudioSound("assets/sounds/footsteps.mp3");
+    SetAudioSoundPitch(footstep_sounds[i], 1.7f - i * 0.1f);
+    SetAudioSoundVolume(footstep_sounds[i], 0.8f);
   }
-  blast_sound = LoadSound("assets/sounds/blast.mp3");
-  key_pickup_sound = LoadSound("assets/sounds/key-pickup.wav");
-  bomb_pickup_sound = LoadSound("assets/sounds/bomb-pickup.mp3");
-  checkpoint_sound = LoadSound("assets/sounds/checkpoint.mp3");
-  phase_shift_sound = LoadSound("assets/sounds/popup-show.wav");
+  blast_sound = LoadAudioSound("assets/sounds/blast.mp3");
+  SetAudioSoundVolume(blast_sound, 1.0f);
+  key_pickup_sound = LoadAudioSound("assets/sounds/key-pickup.wav");
+  SetAudioSoundVolume(key_pickup_sound, 0.9f);
+  bomb_pickup_sound = LoadAudioSound("assets/sounds/bomb-pickup.mp3");
+  SetAudioSoundVolume(bomb_pickup_sound, 0.9f);
+  checkpoint_sound = LoadAudioSound("assets/sounds/checkpoint.mp3");
+  SetAudioSoundPitch(checkpoint_sound, 0.8f); /* Matching original Ada code */
+  SetAudioSoundVolume(checkpoint_sound, 0.9f);
+  phase_shift_sound = LoadAudioSound("assets/sounds/popup-show.wav");
+  SetAudioSoundVolume(phase_shift_sound, 0.9f);
 
   /* Load all remaining sound assets */
-  guard_step_sound = LoadSound("assets/sounds/guard-step.mp3");
-  open_door_sound = LoadSound("assets/sounds/open-door.wav");
-  plant_bomb_sound = LoadSound("assets/sounds/plant-bomb.wav");
+  guard_step_sound = LoadAudioSound("assets/sounds/guard-step.mp3");
+  SetAudioSoundVolume(guard_step_sound, 0.8f);
+  open_door_sound = LoadAudioSound("assets/sounds/open-door.wav");
+  SetAudioSoundVolume(open_door_sound, 0.5f); /* Matching original Ada code */
+  plant_bomb_sound = LoadAudioSound("assets/sounds/plant-bomb.wav");
+  SetAudioSoundVolume(plant_bomb_sound, 0.8f);
 
   /* Map unloaded externs to existing sound files */
-  teleport_sound = LoadSound("assets/sounds/popup-show.wav");
-  SetSoundPitch(teleport_sound, 1.3f);
-  measurement_sound = LoadSound("assets/sounds/checkpoint.mp3");
-  SetSoundPitch(measurement_sound, 0.8f);
-  entangle_sound = LoadSound("assets/sounds/popup-show.wav");
-  SetSoundPitch(entangle_sound, 0.7f);
-  qubit_rotate_sound = LoadSound("assets/sounds/popup-show.wav");
-  SetSoundPitch(qubit_rotate_sound, 1.5f);
-  oracle_sound = LoadSound("assets/sounds/checkpoint.mp3");
-  SetSoundPitch(oracle_sound, 1.2f);
-  ice_slide_sound = LoadSound("assets/sounds/guard-step.mp3");
-  SetSoundPitch(ice_slide_sound, 1.4f);
-  mirror_reflect_sound = LoadSound("assets/sounds/blast.mp3");
-  SetSoundPitch(mirror_reflect_sound, 1.8f);
-  decoherence_sound = LoadSound("assets/sounds/blast.mp3");
-  SetSoundPitch(decoherence_sound, 0.6f);
-  portal_activate_sound = LoadSound("assets/sounds/popup-show.wav");
-  SetSoundPitch(portal_activate_sound, 0.9f);
-  level_complete_sound = LoadSound("assets/sounds/checkpoint.mp3");
-  SetSoundPitch(level_complete_sound, 1.1f);
+  teleport_sound = LoadAudioSound("assets/sounds/popup-show.wav");
+  SetAudioSoundPitch(teleport_sound, 1.3f);
+  SetAudioSoundVolume(teleport_sound, 0.9f);
+  measurement_sound = LoadAudioSound("assets/sounds/checkpoint.mp3");
+  SetAudioSoundPitch(measurement_sound, 0.8f);
+  SetAudioSoundVolume(measurement_sound, 0.9f);
+  entangle_sound = LoadAudioSound("assets/sounds/popup-show.wav");
+  SetAudioSoundPitch(entangle_sound, 0.7f);
+  SetAudioSoundVolume(entangle_sound, 0.9f);
+  qubit_rotate_sound = LoadAudioSound("assets/sounds/popup-show.wav");
+  SetAudioSoundPitch(qubit_rotate_sound, 1.5f);
+  SetAudioSoundVolume(qubit_rotate_sound, 0.9f);
+  oracle_sound = LoadAudioSound("assets/sounds/checkpoint.mp3");
+  SetAudioSoundPitch(oracle_sound, 1.2f);
+  SetAudioSoundVolume(oracle_sound, 0.9f);
+  ice_slide_sound = LoadAudioSound("assets/sounds/guard-step.mp3");
+  SetAudioSoundPitch(ice_slide_sound, 1.4f);
+  SetAudioSoundVolume(ice_slide_sound, 0.8f);
+  mirror_reflect_sound = LoadAudioSound("assets/sounds/blast.mp3");
+  SetAudioSoundPitch(mirror_reflect_sound, 1.8f);
+  SetAudioSoundVolume(mirror_reflect_sound, 0.9f);
+  decoherence_sound = LoadAudioSound("assets/sounds/blast.mp3");
+  SetAudioSoundPitch(decoherence_sound, 0.6f);
+  SetAudioSoundVolume(decoherence_sound, 0.9f);
+  portal_activate_sound = LoadAudioSound("assets/sounds/popup-show.wav");
+  SetAudioSoundPitch(portal_activate_sound, 0.9f);
+  SetAudioSoundVolume(portal_activate_sound, 0.9f);
+  level_complete_sound = LoadAudioSound("assets/sounds/checkpoint.mp3");
+  SetAudioSoundPitch(level_complete_sound, 1.1f);
+  SetAudioSoundVolume(level_complete_sound, 1.0f);
 
-  ambient_music = LoadMusicStream("assets/sounds/ambient.wav");
-  PlayMusicStream(ambient_music);
-  SetMusicVolume(ambient_music, 1.0f);
+  ambient_music = LoadAudioMusic("assets/sounds/ambient.wav");
+  PlayAudioMusic(ambient_music);
+  SetAudioMusicVolume(ambient_music,
+                      0.5f); /* Was 1.0 -- original Ada used 0.5 */
 
   game_font = GetFontDefault();
 
@@ -91,7 +112,21 @@ int main(void) {
   load_level(&game, 0);
 
   while (!WindowShouldClose()) {
-    UpdateMusicStream(ambient_music);
+    UpdateAudioMusic(ambient_music);
+
+#ifdef DEBUG_MODE
+    /* === AUDIO DEBUG KEYS === */
+    if (IsKeyPressed(KEY_F7)) {
+      if (IsAudioMusicPlaying(ambient_music)) {
+        StopAudioMusic(ambient_music);
+        printf("[AUDIO DEBUG] F7: Music STOPPED\n");
+      } else {
+        PlayAudioMusic(ambient_music);
+        SetAudioMusicVolume(ambient_music, 0.5f);
+        printf("[AUDIO DEBUG] F7: Music STARTED\n");
+      }
+    }
+#endif
 
     float dt = GetFrameTime();
 
@@ -172,7 +207,7 @@ int main(void) {
         }
       } else {
         if (check_level_complete(&game)) {
-          PlaySound(level_complete_sound);
+          PlayAudioSound(level_complete_sound);
           save_game(&game);
           if (game.current_level < MAX_LEVELS - 1) {
             if (game.current_level + 1 > game.highest_level_unlocked) {
@@ -393,30 +428,30 @@ int main(void) {
   cleanup_game(&game);
 
   for (int i = 0; i < 4; i++) {
-    UnloadSound(footstep_sounds[i]);
+    UnloadAudioSound(footstep_sounds[i]);
   }
-  UnloadSound(blast_sound);
-  UnloadSound(key_pickup_sound);
-  UnloadSound(bomb_pickup_sound);
-  UnloadSound(checkpoint_sound);
-  UnloadSound(phase_shift_sound);
-  UnloadSound(guard_step_sound);
-  UnloadSound(open_door_sound);
-  UnloadSound(plant_bomb_sound);
-  UnloadSound(teleport_sound);
-  UnloadSound(measurement_sound);
-  UnloadSound(entangle_sound);
-  UnloadSound(qubit_rotate_sound);
-  UnloadSound(oracle_sound);
-  UnloadSound(ice_slide_sound);
-  UnloadSound(mirror_reflect_sound);
-  UnloadSound(decoherence_sound);
-  UnloadSound(portal_activate_sound);
-  UnloadSound(level_complete_sound);
-  UnloadMusicStream(ambient_music);
+  UnloadAudioSound(blast_sound);
+  UnloadAudioSound(key_pickup_sound);
+  UnloadAudioSound(bomb_pickup_sound);
+  UnloadAudioSound(checkpoint_sound);
+  UnloadAudioSound(phase_shift_sound);
+  UnloadAudioSound(guard_step_sound);
+  UnloadAudioSound(open_door_sound);
+  UnloadAudioSound(plant_bomb_sound);
+  UnloadAudioSound(teleport_sound);
+  UnloadAudioSound(measurement_sound);
+  UnloadAudioSound(entangle_sound);
+  UnloadAudioSound(qubit_rotate_sound);
+  UnloadAudioSound(oracle_sound);
+  UnloadAudioSound(ice_slide_sound);
+  UnloadAudioSound(mirror_reflect_sound);
+  UnloadAudioSound(decoherence_sound);
+  UnloadAudioSound(portal_activate_sound);
+  UnloadAudioSound(level_complete_sound);
+  UnloadAudioMusic(ambient_music);
   UnloadTexture(title_icon);
 
-  CloseAudioDevice();
+  CloseAudioSystem();
   CloseWindow();
 
   return 0;
