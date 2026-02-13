@@ -30,21 +30,21 @@ class QuantumHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/generate_bit":
             try:
-                # 1. Crear circuito cuántico (1 Qubit, 1 Bit Clásico)
+                # Crear circuito cuántico (1 Qubit, 1 Bit Clásico)
                 circuit = QuantumCircuit(1, 1)
 
-                # 2. Puerta Hadamard (Superposición 50/50)
+                # Puerta Hadamard (Superposición 50/50)
                 circuit.h(0)
 
-                # 3. Medir el colapso
+                # Medir el colapso
                 circuit.measure(0, 0)
 
-                # 4. Ejecutar simulación
+                # Ejecutar simulación
                 result = QUANTUM_SIMULATOR.run(circuit, shots=1, memory=True).result()
                 memory = result.get_memory(circuit)
                 quantum_bit = int(memory[0]) # Resultado: 0 o 1
 
-                # 5. Preparar respuesta
+                # Preparar respuesta
                 response = {
                     "success": True,
                     "value": quantum_bit,
@@ -52,16 +52,16 @@ class QuantumHandler(http.server.SimpleHTTPRequestHandler):
                     "timestamp": datetime.now().strftime("%H:%M:%S")
                 }
 
-                # 6. Enviar cabeceras
+                # Enviar cabeceras
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
 
-                # 7. Enviar cuerpo
+                # Enviar cuerpo
                 self.wfile.write(json.dumps(response).encode("utf-8"))
 
-                logging.info(f"⚛️ Petición Cuántica desde {self.client_address[0]} | Resultado: {quantum_bit}")
+                logging.info(f"Petición Cuántica desde {self.client_address[0]} | Resultado: {quantum_bit}")
                 return
 
             except Exception as e:
@@ -80,7 +80,7 @@ class QuantumHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 if __name__ == "__main__":
-    print(f"⚛️  Servidor Cuántico corriendo en el puerto {PORT}...")
+    print(f"Servidor Cuántico corriendo en el puerto {PORT}...")
     print(f"IP Configurada: {IP}") 
     print(f"Logs en {LOG_FILE}")
     
