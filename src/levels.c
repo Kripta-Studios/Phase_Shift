@@ -1753,11 +1753,23 @@ void load_level_20(GameState *game) {
   game->map->data[12][26] = CELL_DOOR;
 
   // Final Door blocking Exit (Requires Key 3)
-  game->map->data[12][30] = CELL_DOOR;
+  // game->map->data[12][30] = CELL_DOOR; // OLD
+  game->map->data[12][30] = CELL_WALL; // Blocked
 
   // Make Exit accessible behind Final Door
-  game->map->data[12][31] = CELL_EXIT;
-  game->exit_position = ivec2(31, 12);
+  // game->map->data[12][31] = CELL_EXIT; // OLD
+  game->map->data[12][31] = CELL_WALL; // Blocked
+  // game->exit_position = ivec2(31, 12); // OLD
+
+  // NEW EXIT: Bottom Row Vertical (29, 23)
+  // Approach from Top
+  game->map->data[21][29] = CELL_FLOOR;
+  game->map->data[22][29] = CELL_DOOR; // Final Door
+  game->map->data[23][29] = CELL_EXIT; // Exit (Overwrites bottom wall)
+  game->exit_position = ivec2(29, 23);
+
+  // Clean up previous attempt pos
+  game->map->data[22][30] = CELL_FLOOR; // Just floor next to it
 
   /* Portals: Island 2 -> Sec 3 */
   // Portal 0 (Source) links to 1.
