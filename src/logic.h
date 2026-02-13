@@ -10,7 +10,8 @@ void spawn_gnome(GameState *game, IVector2 pos);
 void allocate_item(GameState *game, IVector2 pos, ItemKind kind);
 void spawn_detector(GameState *game, IVector2 pos, Direction dir,
                     PhaseKind phase);
-void spawn_tunnel(GameState *game, IVector2 pos, IVector2 size);
+void spawn_tunnel(GameState *game, IVector2 pos, IVector2 size,
+                  IVector2 offset);
 void spawn_button(GameState *game, IVector2 pos, PhaseKind phase);
 void make_room(GameState *game);
 

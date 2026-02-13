@@ -14,6 +14,16 @@ Desarrollado por **Kripta Studios** · Motor: [Raylib](https://www.raylib.com/) 
 
 ---
 
+## 📸 Capturas de Pantalla
+
+![Gameplay Action](./assets/Screenshot1.png)
+*Explorando el laberinto cuántico y usando fases*
+
+![Puzzle Solving](./assets/Screenshot2.png)
+*Resolviendo puzzles con superposición y entrelazamiento*
+
+---
+
 ## 🎮 Controles
 
 | Tecla | Acción |
@@ -207,9 +217,32 @@ Tres secciones conectadas por portales. Necesitas la llave de la sección 2.
 ---
 
 ### Nivel 15 — PRUEBA FINAL
-**Concepto:** Prueba final — todas las mecánicas combinadas
-
+**Concepto:** Prueba final del primer bloque
 Combina muros de fase, botones, guardias y ecos. Usa todo lo que has aprendido.
+
+---
+
+### Nivel 16 — GROVER II
+**Concepto:** Superposición avanzada
+Laberinto complejo con detectores y muros variables. Requiere uso preciso de Superposición y cambio de fase.
+
+---
+
+### Nivel 17 — ENTRELAZAMIENTO
+**Concepto:** Introducción a la mecánica de Entrelazamiento (`E`)
+El guardia está encerrado con un botón necesario para salir. Entrelázate con él (`E`) y guía sus movimientos para que pise el botón por ti.
+
+---
+
+### Nivel 18 — ORÁCULO
+**Concepto:** Búsqueda en 4 cámaras
+Cuatro cámaras idénticas. Una contiene la llave, las otras señuelos o peligros. Usa superposición para explorar sin arriesgar tu cuerpo físico.
+
+---
+
+### Nivel 19 — EJECUCIÓN FINAL
+**Concepto:** El desafío definitivo
+Tres botones dispersos, múltiples guardias y muros de fase oscilantes. Debes coordinar Ecos, Entrelazamiento y Bombas para escapar.
 
 ---
 
@@ -257,7 +290,7 @@ gcc -O3 -Wall -Wno-missing-braces -std=c99 -I. -Isrc -L. -o phase_shift.exe \
 | `src/utils.c/h` | Mapa, colisiones, paleta, pathfinding |
 | `src/logic.c/h` | Turnos, IA, física cuántica, ecos |
 | `src/render.c/h` | Renderizado visual, HUD, efectos |
-| `src/levels.c/h` | Definición y carga de 15 niveles |
+| `src/levels.c/h` | Definición y carga de 19 niveles |
 | `src/menus.c/h` | Menú principal y pausa |
 | `src/persistence.c/h` | Guardado/cargado de progreso |
 | `src/atmosphere.c/h` | Estrellas, átomos decorativos |

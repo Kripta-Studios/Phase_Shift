@@ -1085,3 +1085,65 @@ void render_pause_menu(GameState *game) {
   DrawText(txt_quit, (GetScreenWidth() - MeasureText(txt_quit, 30)) / 2, 500,
            30, RED);
 }
+void spawn_floating_text(GameState *game, IVector2 pos, const char *text,
+                         Color col) {
+  for (int i = 0; i < 20; i++) {
+    if (!game->floating_texts[i].active) {
+      game->floating_texts[i].active = true;
+      game->floating_texts[i].position = (Vector2){
+          (float)pos.x * CELL_SIZE + CELL_SIZE / 2, (float)pos.y * CELL_SIZE};
+      snprintf(game->floating_texts[i].text, 32, "%s", text);
+      game->floating_texts[i].color = col;
+      game->floating_texts[i].life = 1.5f;
+      game->floating_texts[i].velocity_y = -20.0f;
+      return;
+    }
+  }
+}
+
+void spawn_centered_text(GameState *game, const char *text, Color col) {
+  for (int i = 0; i < 20; i++) {
+    if (!game->floating_texts[i].active) {
+      game->floating_texts[i].active = true;
+      /* Position at center of screen */
+      game->floating_texts[i].position =
+          (Vector2){(float)GetScreenWidth() / 2, (float)GetScreenHeight() / 2};
+      snprintf(game->floating_texts[i].text, 32, "%s", text);
+      game->floating_texts[i].color = col;
+      game->floating_texts[i].life = 2.0f;         // Longer life
+      game->floating_texts[i].velocity_y = -10.0f; // Slower rise
+      return;
+    }
+  }
+}
+
+void update_and_render_floating_texts(GameState *game) {
+  float dt = GetFrameTime();
+  for (int i = 0; i < 20; i++) {
+    if (game->floating_texts[i].active) {
+      game->floating_texts[i].life -= dt;
+      game->floating_texts[i].position.y +=
+          game->floating_texts[i].velocity_y * dt;
+
+      if (game->floating_texts[i].life <= 0) {
+        game->floating_texts[i].active = false;
+      } else {
+        int width = MeasureText(game->floating_texts[i].text, 20);
+        float alpha = 1.0f;
+        if (game->floating_texts[i].life < 0.5f)
+          alpha = game->floating_texts[i].life * 2.0f;
+        Color col = game->floating_texts[i].color;
+        col.a = (unsigned char)(255.0f * alpha);
+
+        // Draw outline for better visibility
+        DrawText(game->floating_texts[i].text,
+                 (int)(game->floating_texts[i].position.x - width / 2) + 1,
+                 (int)game->floating_texts[i].position.y + 1, 20, BLACK);
+
+        DrawText(game->floating_texts[i].text,
+                 (int)(game->floating_texts[i].position.x - width / 2),
+                 (int)game->floating_texts[i].position.y, 20, col);
+      }
+    }
+  }
+}

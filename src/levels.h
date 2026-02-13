@@ -21,6 +21,10 @@ void load_level_12(GameState *game);
 void load_level_13(GameState *game);
 void load_level_14(GameState *game);
 void load_level_15(GameState *game);
+void load_level_16(GameState *game);
+void load_level_17(GameState *game);
+void load_level_18(GameState *game);
+void load_level_19(GameState *game);
 void init_encyclopedia(GameState *game);
 
 void init_intro_dialogs(GameState *game);

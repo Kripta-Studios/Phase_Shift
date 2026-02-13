@@ -1,7 +1,7 @@
 #include "common.h"
 #include "levels.h" // For load_level
 #include "persistence.h"
-
+#include "render.h"
 
 // Helper: Reset game to level 0 (New Game)
 void start_new_game(GameState *game) {
@@ -53,9 +53,15 @@ void update_main_menu(GameState *game) {
 
   // Debug: Reset Save with R?
   if (IsKeyPressed(KEY_R)) {
+    // FULL RESET
+    memset(&game->player, 0, sizeof(PlayerState));
+    memset(game->encyclopedia, 0, sizeof(game->encyclopedia));
     game->highest_level_unlocked = 0;
-    // Optionally save this reset?
-    // save_game(game);
+    game->encyclopedia_count = 0;
+
+    // Save the reset state immediately so next load sees it
+    save_game(game);
+    spawn_floating_text(game, (IVector2){10, 10}, "PROGRESS RESET", RED);
   }
 }
 

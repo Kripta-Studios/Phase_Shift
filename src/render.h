@@ -50,6 +50,14 @@ void render_atmosphere_bg(GameState *game);
 void render_flashlight_overlay(GameState *game);
 
 void render_main_menu(GameState *game);
+void render_main_menu(GameState *game);
 void render_pause_menu(GameState *game);
+
+// Floating Text
+void spawn_floating_text(GameState *game, IVector2 pos, const char *text,
+                         Color col);
+void spawn_centered_text(GameState *game, const char *text, Color col);
+
+void update_and_render_floating_texts(GameState *game);
 
 #endif

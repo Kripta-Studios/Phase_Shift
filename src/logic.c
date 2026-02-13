@@ -78,12 +78,14 @@ void spawn_detector(GameState *game, IVector2 pos, Direction dir,
   }
 }
 
-void spawn_tunnel(GameState *game, IVector2 pos, IVector2 size) {
+void spawn_tunnel(GameState *game, IVector2 pos, IVector2 size,
+                  IVector2 offset) {
   for (int i = 0; i < MAX_TUNNELS; i++) {
     /* valid slot if position is 0,0 (empty) */
     if (game->tunnels[i].position.x == 0 && game->tunnels[i].position.y == 0) {
       game->tunnels[i].position = pos;
       game->tunnels[i].size = size;
+      game->tunnels[i].target_offset = offset;
       game->tunnels[i].success_probability = 0.5f;
       game->tunnels[i].last_failed = false;
       return;
@@ -582,7 +584,7 @@ bool attempt_quantum_tunnel(GameState *game, int tunnel_idx) {
   float random_val = (float)(rand() % 100) / 100.0f;
 
   if (random_val < success_chance) {
-    player->position = ivec2_add(tunnel->position, tunnel->size);
+    player->position = ivec2_add(tunnel->position, tunnel->target_offset);
     spawn_spark_effect(game, player->position, PURPLE);
     return true;
   } else {
@@ -683,473 +685,513 @@ void game_player_turn(GameState *game, Direction dir) {
       player->position = slide_pos;
     }
 
-    for (int i = 0; i < MAX_ITEMS; i++) {
-      Item *item = &game->items[i];
-      if (item->kind == ITEM_NONE)
-        continue;
-      if (!ivec2_eq(item->position, player->position))
-        continue;
+    void collect_item_at(GameState * game, IVector2 pos) {
+      PlayerState *player = &game->player;
+      for (int i = 0; i < MAX_ITEMS; i++) {
+        Item *item = &game->items[i];
+        if (item->kind == ITEM_NONE)
+          continue;
+        if (!ivec2_eq(item->position, pos))
+          continue;
 
-      switch (item->kind) {
-      case ITEM_KEY:
-        player->keys++;
-        item->kind = ITEM_NONE;
-        PlayAudioSound(key_pickup_sound);
-        spawn_spark_effect(game, item->position, YELLOW);
-        break;
-      case ITEM_BOMB_REFILL:
-        if (player->bombs < player->bomb_slots && item->cooldown <= 0) {
-          player->bombs++;
-          item->cooldown = 10;
-          PlayAudioSound(bomb_pickup_sound);
-          spawn_spark_effect(game, item->position, RED);
-        }
-        break;
-      case ITEM_BOMB_SLOT:
-        item->kind = ITEM_NONE;
-        player->bomb_slots++;
-        player->bombs = player->bomb_slots;
-        // Add sound?
-        PlayAudioSound(key_pickup_sound);
-        spawn_spark_effect(game, item->position, ORANGE);
-        break;
-      case ITEM_CHECKPOINT:
-        item->kind = ITEM_NONE;
-        player->bombs = player->bomb_slots;
-        player->coherence.current = 100.0f;
-        PlayAudioSound(checkpoint_sound);
-        spawn_spark_effect(game, item->position, GREEN);
-        break;
-      case ITEM_COHERENCE_PICKUP:
-        item->kind = ITEM_NONE;
-        player->coherence.current =
-            fminf(100.0f, player->coherence.current + 5.0f);
-        // Sound?
-        spawn_spark_effect(game, item->position, BLUE);
-        break;
-      case ITEM_STABILIZER:
-        // Passive effect, not picked up? Or picked up?
-        // Logic says "break", so maybe it just sits there?
-        // If it's a pickup, we should set ITEM_NONE.
-        // Assuming it's a passive area effect or needs activation?
-        break;
-      case ITEM_PHASE_UNLOCKER:
-        item->kind = ITEM_NONE;
-        if (!game->player.phase_system.green_unlocked) {
-          game->player.phase_system.green_unlocked = true;
-        } else {
-          game->player.phase_system.yellow_unlocked = true;
-        }
-        PlayAudioSound(key_pickup_sound);
-        break;
-      case ITEM_QUBIT:
-        item->kind = ITEM_NONE;
-        if (game->player.qubit_count < MAX_QUBITS) {
-          init_qubit(&game->player.qubits[game->player.qubit_count]);
-          game->player.qubit_count++;
-          if (IsAudioSoundValid(qubit_rotate_sound))
-            PlayAudioSound(qubit_rotate_sound);
-          spawn_spark_effect(game, item->position, SKYBLUE);
-        }
-        break;
-      case ITEM_HADAMARD_GATE:
-        item->kind = ITEM_NONE;
-        if (game->player.qubit_count > 0) {
-          apply_hadamard_gate(
-              &game->player.qubits[game->player.qubit_count - 1]);
-        }
-        break;
-      case ITEM_TELEPORT_DEVICE:
-        item->kind = ITEM_NONE;
-        game->has_teleport_device = true;
-        PlayAudioSound(key_pickup_sound);
-        spawn_spark_effect(game, item->position, MAGENTA);
-        break;
-      case ITEM_PHASE_LOCK:
-        item->kind = ITEM_NONE;
-        game->player.phase_system.phase_lock_turns = 0;
-        break;
-      default:
-        break;
-      }
-    }
-  } else if (cell == CELL_DOOR) {
-    if (player->keys > 0) {
-      player->keys--;
-      flood_fill(game, new_pos, CELL_FLOOR);
-      player->position = new_pos;
-      PlayAudioSound(open_door_sound);
-    }
-  }
-
-  /* Check collision with guards immediately after player moves */
-  for (int e = 0; e < MAX_COLAPSORES; e++) {
-    if (game->colapsores[e].dead)
-      continue;
-    if (inside_of_rect(game->colapsores[e].position, game->colapsores[e].size,
-                       player->position)) {
-      kill_player(game);
-      break;
-    }
-  }
-
-  if (player->is_recording_echo && player->recording_frame < MAX_ECHO_FRAMES) {
-    player->current_recording[player->recording_frame].position =
-        player->position;
-    player->current_recording[player->recording_frame].action.kind = CMD_STEP;
-    player->current_recording[player->recording_frame].action.dir = dir;
-    player->recording_frame++;
-  }
-
-  printf("[AUDIO] Playing footstep sound\n");
-  PlayAudioSound(footstep_sounds[rand() % 4]);
-}
-
-void game_bombs_turn(GameState *game) {
-  for (int e = 0; e < MAX_COLAPSORES; e++) {
-    game->colapsores[e].damaged = false;
-  }
-
-  for (int i = 0; i < MAX_BOMBS; i++) {
-    if (game->bombs[i].countdown > 0) {
-      game->bombs[i].countdown--;
-      if (game->bombs[i].countdown <= 0) {
-        PlayAudioSound(blast_sound);
-        explode(game, game->bombs[i].position);
-      }
-    }
-  }
-
-  for (int e = 0; e < MAX_COLAPSORES; e++) {
-    ColapsarState *colapsor = &game->colapsores[e];
-    if (!colapsor->dead && colapsor->damaged) {
-      switch (colapsor->kind) {
-      case COLAPSOR_GUARD:
-        colapsor->eyes = EYES_CRINGE;
-        colapsor->health -= 0.45f;
-        if (colapsor->health <= 0.0f) {
-          colapsor->dead = true;
-        }
-        break;
-      case COLAPSOR_GNOME:
-        colapsor->dead = true;
-        allocate_item(game, colapsor->position, ITEM_KEY);
-        break;
-      default:
-        break;
-      }
-    }
-  }
-}
-
-void game_explosions_turn(GameState *game) {
-  for (int y = 0; y < game->map->rows; y++) {
-    for (int x = 0; x < game->map->cols; x++) {
-      if (game->map->data[y][x] == CELL_EXPLOSION) {
-        game->map->data[y][x] = CELL_FLOOR;
-      }
-    }
-  }
-}
-
-void game_items_turn(GameState *game) {
-  for (int i = 0; i < MAX_ITEMS; i++) {
-    if (game->items[i].kind == ITEM_BOMB_REFILL) {
-      if (game->items[i].cooldown > 0) {
-        game->items[i].cooldown--;
-      }
-    }
-  }
-}
-
-void game_colapsores_turn(GameState *game) {
-  for (int i = 0; i < MAX_COLAPSORES; i++) {
-    ColapsarState *colapsor = &game->colapsores[i];
-    if (colapsor->dead)
-      continue;
-
-    colapsor->prev_position = colapsor->position;
-    colapsor->prev_eyes = colapsor->eyes;
-
-    if (colapsor->entangled_with_player) {
-      IVector2 delta =
-          ivec2_sub(game->player.position, game->player.prev_position);
-      if (delta.x != 0 || delta.y != 0) {
-        IVector2 target = ivec2_add(colapsor->position, delta);
-        if (within_map(game, target)) {
-          Cell cell = game->map->data[target.y][target.x];
-          // Simple collision check for entangled entity
-          if (cell != CELL_WALL && cell != CELL_BARRICADE &&
-              cell != CELL_DOOR && cell != CELL_WALL_RED &&
-              cell != CELL_WALL_BLUE && cell != CELL_WALL_GREEN &&
-              cell != CELL_WALL_YELLOW) {
-            colapsor->position = target;
+        switch (item->kind) {
+        case ITEM_KEY:
+          player->keys++;
+          item->kind = ITEM_NONE;
+          PlayAudioSound(key_pickup_sound);
+          spawn_spark_effect(game, item->position, YELLOW);
+          spawn_centered_text(game, "LLAVE OBTENIDA", BLUE);
+          break;
+        case ITEM_BOMB_REFILL:
+          if (player->bombs < player->bomb_slots && item->cooldown <= 0) {
+            player->bombs++;
+            item->cooldown = 10;
+            PlayAudioSound(bomb_pickup_sound);
+            spawn_spark_effect(game, item->position, RED);
           }
+          break;
+        case ITEM_BOMB_SLOT:
+          item->kind = ITEM_NONE;
+          player->bomb_slots++;
+          player->bombs = player->bomb_slots;
+          PlayAudioSound(key_pickup_sound);
+          spawn_spark_effect(game, item->position, ORANGE);
+          spawn_centered_text(game, "AMPLIACION BOMBAS", ORANGE);
+          break;
+        case ITEM_CHECKPOINT:
+          item->kind = ITEM_NONE;
+          player->bombs = player->bomb_slots;
+          player->coherence.current = 100.0f;
+          game->has_checkpoint = true;
+          game->checkpoint_pos = item->position;
+          PlayAudioSound(checkpoint_sound);
+          spawn_spark_effect(game, item->position, GREEN);
+          spawn_centered_text(game, "PUNTO DE CONTROL", GREEN);
+          break;
+        case ITEM_COHERENCE_PICKUP:
+          item->kind = ITEM_NONE;
+          player->coherence.current =
+              fminf(100.0f, player->coherence.current + 5.0f);
+          spawn_spark_effect(game, item->position, BLUE);
+          spawn_centered_text(game, "+5% COHERENCE", YELLOW);
+          break;
+        case ITEM_STABILIZER:
+          break;
+        case ITEM_PHASE_UNLOCKER:
+          item->kind = ITEM_NONE;
+          if (!game->player.phase_system.green_unlocked) {
+            game->player.phase_system.green_unlocked = true;
+            spawn_centered_text(game, "FASE VERDE DESBLOQUEADA", GREEN);
+          } else {
+            game->player.phase_system.yellow_unlocked = true;
+            spawn_centered_text(game, "FASE AMARILLA DESBLOQUEADA", YELLOW);
+          }
+          PlayAudioSound(key_pickup_sound);
+          break;
+        case ITEM_QUBIT:
+          item->kind = ITEM_NONE;
+          if (game->player.qubit_count < MAX_QUBITS) {
+            init_qubit(&game->player.qubits[game->player.qubit_count]);
+            game->player.qubit_count++;
+            if (IsAudioSoundValid(qubit_rotate_sound))
+              PlayAudioSound(qubit_rotate_sound);
+            spawn_spark_effect(game, item->position, SKYBLUE);
+          }
+          break;
+        case ITEM_HADAMARD_GATE:
+          item->kind = ITEM_NONE;
+          if (game->player.qubit_count > 0) {
+            apply_hadamard_gate(
+                &game->player.qubits[game->player.qubit_count - 1]);
+          }
+          break;
+        case ITEM_TELEPORT_DEVICE:
+          item->kind = ITEM_NONE;
+          game->has_teleport_device = true;
+          PlayAudioSound(key_pickup_sound);
+          spawn_spark_effect(game, item->position, MAGENTA);
+          break;
+        case ITEM_PHASE_LOCK:
+          item->kind = ITEM_NONE;
+          game->player.phase_system.phase_lock_turns = 10;
+          break;
+        default:
+          break;
         }
       }
-      // Visual feedback
-      colapsor->eyes = EYES_SURPRISED;
-      continue; // Skip AI behavior
     }
 
-    switch (colapsor->kind) {
-    case COLAPSOR_GUARD: {
-      recompute_path_for_colapsor(game, i);
-      IVector2 pos = colapsor->position;
-      int dist = colapsor->path[pos.y][pos.x];
+    void game_items_turn(GameState * game) {
+      collect_item_at(game, game->player.position);
+    }
+    else if (cell == CELL_DOOR) {
+      if (player->keys > 0) {
+        player->keys--;
+        flood_fill(game, new_pos, CELL_FLOOR);
+        player->position = new_pos;
+        PlayAudioSound(open_door_sound);
+      }
+    }
 
-      if (dist == 0) {
+    /* Check collision with guards immediately after player moves */
+    for (int e = 0; e < MAX_COLAPSORES; e++) {
+      if (game->colapsores[e].dead)
+        continue;
+      if (inside_of_rect(game->colapsores[e].position, game->colapsores[e].size,
+                         player->position)) {
         kill_player(game);
-        colapsor->eyes = EYES_SURPRISED;
-      } else if (dist > 0) {
-        if (colapsor->attack_cooldown <= 0) {
-          IVector2 best_moves[4];
-          int count = 0;
-
-          for (int dir = 0; dir < 4; dir++) {
-            IVector2 test_pos = pos;
-            while (colapsor_can_stand_here(game, test_pos, i)) {
-              test_pos = ivec2_add(test_pos, DIRECTION_VECTORS[dir]);
-              if (within_map(game, test_pos) &&
-                  colapsor->path[test_pos.y][test_pos.x] == dist - 1) {
-                best_moves[count++] = test_pos;
-                break;
-              }
-            }
-          }
-
-          if (count > 0) {
-            colapsor->position = best_moves[rand() % count];
-            PlayAudioSound(guard_step_sound);
-          }
-
-          colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN;
-        } else {
-          colapsor->attack_cooldown--;
-        }
-
-        if (dist == 1) {
-          colapsor->eyes = EYES_ANGRY;
-        } else {
-          colapsor->eyes = EYES_OPEN;
-        }
-        colapsor->eyes_target = game->player.position;
-
-        if (inside_of_rect(colapsor->position, colapsor->size,
-                           game->player.position)) {
-          kill_player(game);
-        }
-      } else {
-        colapsor->eyes = EYES_CLOSED;
-        colapsor->eyes_target = ivec2_add(colapsor->position, ivec2(1, 3));
-        colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN + 1;
-      }
-
-      if (colapsor->health < 1.0f) {
-        colapsor->health += 0.01f;
-      }
-      break;
-    }
-    case COLAPSOR_GNOME: {
-      recompute_path_for_colapsor(game, i);
-      IVector2 pos = colapsor->position;
-
-      if (colapsor->path[pos.y][pos.x] >= 0) {
-        IVector2 available[4];
-        int count = 0;
-
-        for (int dir = 0; dir < 4; dir++) {
-          IVector2 new_pos = ivec2_add(pos, DIRECTION_VECTORS[dir]);
-          if (within_map(game, new_pos) &&
-              game->map->data[new_pos.y][new_pos.x] == CELL_FLOOR &&
-              colapsor->path[new_pos.y][new_pos.x] >
-                  colapsor->path[pos.y][pos.x]) {
-            available[count++] = new_pos;
-          }
-        }
-
-        if (count > 0) {
-          colapsor->position = available[rand() % count];
-        }
-        colapsor->eyes = EYES_OPEN;
-        colapsor->eyes_target = game->player.position;
-      } else {
-        colapsor->eyes = EYES_CLOSED;
-        colapsor->eyes_target = ivec2_add(colapsor->position, ivec2(0, 1));
-      }
-      break;
-    }
-    default:
-      break;
-    }
-  }
-}
-
-void handle_plant_bomb(GameState *game) {
-  PlayerState *player = &game->player;
-
-  if (player->bombs > 0) {
-    for (int i = 0; i < MAX_BOMBS; i++) {
-      if (game->bombs[i].countdown <= 0) {
-        game->bombs[i].countdown = 3;
-        game->bombs[i].position = player->position;
         break;
       }
     }
-    player->bombs--;
 
     if (player->is_recording_echo &&
         player->recording_frame < MAX_ECHO_FRAMES) {
       player->current_recording[player->recording_frame].position =
           player->position;
-      player->current_recording[player->recording_frame].action.kind =
-          CMD_PLANT;
+      player->current_recording[player->recording_frame].action.kind = CMD_STEP;
+      player->current_recording[player->recording_frame].action.dir = dir;
       player->recording_frame++;
     }
+
+    printf("[AUDIO] Playing footstep sound\n");
+    PlayAudioSound(footstep_sounds[rand() % 4]);
   }
-}
 
-void update_pressure_buttons(GameState *game) {
-  PlayerState *player = &game->player;
-  bool in_super = player->phase_system.state == PHASE_STATE_SUPERPOSITION;
+  void game_bombs_turn(GameState * game) {
+    for (int e = 0; e < MAX_COLAPSORES; e++) {
+      game->colapsores[e].damaged = false;
+    }
 
-  for (int i = 0; i < MAX_BUTTONS; i++) {
-    PressureButton *b = &game->buttons[i];
-    if (!b->is_active)
-      continue;
-
-    b->is_pressed = false;
-
-    /* Player on button? */
-    if (ivec2_eq(player->position, b->position)) {
-      if (in_super || player->phase_system.current_phase == b->phase) {
-        b->is_pressed = true;
+    for (int i = 0; i < MAX_BOMBS; i++) {
+      if (game->bombs[i].countdown > 0) {
+        game->bombs[i].countdown--;
+        if (game->bombs[i].countdown <= 0) {
+          PlayAudioSound(blast_sound);
+          explode(game, game->bombs[i].position);
+        }
       }
     }
 
-    /* Echo on button? */
-    for (int e = 0; e < MAX_ECHOS; e++) {
-      if (game->echos[e].active &&
-          ivec2_eq(game->echos[e].position, b->position)) {
-        if (game->echos[e].phase == b->phase) {
+    for (int e = 0; e < MAX_COLAPSORES; e++) {
+      ColapsarState *colapsor = &game->colapsores[e];
+      if (!colapsor->dead && colapsor->damaged) {
+        switch (colapsor->kind) {
+        case COLAPSOR_GUARD:
+          colapsor->eyes = EYES_CRINGE;
+          colapsor->health -= 0.45f;
+          if (colapsor->health <= 0.0f) {
+            colapsor->dead = true;
+          }
+          break;
+        case COLAPSOR_GNOME:
+          colapsor->dead = true;
+          allocate_item(game, colapsor->position, ITEM_KEY);
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+
+  void game_explosions_turn(GameState * game) {
+    for (int y = 0; y < game->map->rows; y++) {
+      for (int x = 0; x < game->map->cols; x++) {
+        if (game->map->data[y][x] == CELL_EXPLOSION) {
+          game->map->data[y][x] = CELL_FLOOR;
+        }
+      }
+    }
+  }
+
+  void game_items_turn(GameState * game) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+      if (game->items[i].kind == ITEM_BOMB_REFILL) {
+        if (game->items[i].cooldown > 0) {
+          game->items[i].cooldown--;
+        }
+      }
+    }
+  }
+
+  void game_colapsores_turn(GameState * game) {
+    for (int i = 0; i < MAX_COLAPSORES; i++) {
+      ColapsarState *colapsor = &game->colapsores[i];
+      if (colapsor->dead)
+        continue;
+
+      colapsor->prev_position = colapsor->position;
+      colapsor->prev_eyes = colapsor->eyes;
+
+      if (colapsor->entangled_with_player) {
+        IVector2 delta =
+            ivec2_sub(game->player.position, game->player.prev_position);
+        if (delta.x != 0 || delta.y != 0) {
+          IVector2 target = ivec2_add(colapsor->position, delta);
+          if (within_map(game, target)) {
+            Cell cell = game->map->data[target.y][target.x];
+            // Simple collision check for entangled entity
+            if (cell != CELL_WALL && cell != CELL_BARRICADE &&
+                cell != CELL_DOOR && cell != CELL_WALL_RED &&
+                cell != CELL_WALL_BLUE && cell != CELL_WALL_GREEN &&
+                cell != CELL_WALL_YELLOW) {
+              colapsor->position = target;
+            }
+          }
+        }
+        // Visual feedback
+        colapsor->eyes = EYES_SURPRISED;
+        continue; // Skip AI behavior
+      }
+
+      switch (colapsor->kind) {
+      case COLAPSOR_GUARD: {
+        recompute_path_for_colapsor(game, i);
+        IVector2 pos = colapsor->position;
+        int dist = colapsor->path[pos.y][pos.x];
+
+        if (dist == 0) {
+          kill_player(game);
+          colapsor->eyes = EYES_SURPRISED;
+        } else if (dist > 0) {
+          if (colapsor->attack_cooldown <= 0) {
+            IVector2 best_moves[4];
+            int count = 0;
+
+            for (int dir = 0; dir < 4; dir++) {
+              IVector2 test_pos = pos;
+              while (colapsor_can_stand_here(game, test_pos, i)) {
+                test_pos = ivec2_add(test_pos, DIRECTION_VECTORS[dir]);
+                if (within_map(game, test_pos) &&
+                    colapsor->path[test_pos.y][test_pos.x] == dist - 1) {
+                  best_moves[count++] = test_pos;
+                  break;
+                }
+              }
+            }
+
+            if (count > 0) {
+              colapsor->position = best_moves[rand() % count];
+              PlayAudioSound(guard_step_sound);
+            }
+
+            colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN;
+          } else {
+            colapsor->attack_cooldown--;
+          }
+
+          if (dist == 1) {
+            colapsor->eyes = EYES_ANGRY;
+          } else {
+            colapsor->eyes = EYES_OPEN;
+          }
+          colapsor->eyes_target = game->player.position;
+
+          if (inside_of_rect(colapsor->position, colapsor->size,
+                             game->player.position)) {
+            kill_player(game);
+          }
+        } else {
+          /* NO PATH FOUND - WANDER RANDOMLY */
+          colapsor->eyes = EYES_SURPRISED; // visual cue they are confused
+          colapsor->eyes_target = ivec2_add(colapsor->position, ivec2(1, 3));
+          colapsor->attack_cooldown = GUARD_ATTACK_COOLDOWN + 1;
+
+          /* Increase wander chance to 50% to prevent being "frozen" */
+          if (!colapsor->dead && (rand() % 100) < 50) {
+            int dir = rand() % 4;
+            IVector2 new_pos =
+                ivec2_add(colapsor->position, DIRECTION_VECTORS[dir]);
+            if (colapsor_can_stand_here(game, new_pos, i)) {
+              colapsor->position = new_pos;
+            }
+          }
+        }
+
+        if (colapsor->health < 1.0f) {
+          colapsor->health += 0.01f;
+        }
+        break;
+      }
+      case COLAPSOR_GNOME: {
+        recompute_path_for_colapsor(game, i);
+        IVector2 pos = colapsor->position;
+
+        if (colapsor->path[pos.y][pos.x] >= 0) {
+          IVector2 available[4];
+          int count = 0;
+
+          for (int dir = 0; dir < 4; dir++) {
+            IVector2 new_pos = ivec2_add(pos, DIRECTION_VECTORS[dir]);
+            if (within_map(game, new_pos) &&
+                game->map->data[new_pos.y][new_pos.x] == CELL_FLOOR &&
+                colapsor->path[new_pos.y][new_pos.x] >
+                    colapsor->path[pos.y][pos.x]) {
+              available[count++] = new_pos;
+            }
+          }
+
+          if (count > 0) {
+            colapsor->position = available[rand() % count];
+          }
+          colapsor->eyes = EYES_OPEN;
+          colapsor->eyes_target = game->player.position;
+        } else {
+          colapsor->eyes = EYES_CLOSED;
+          colapsor->eyes_target = ivec2_add(colapsor->position, ivec2(0, 1));
+        }
+        break;
+      }
+      default:
+        break;
+      }
+    }
+  }
+
+  void handle_plant_bomb(GameState * game) {
+    PlayerState *player = &game->player;
+
+    if (player->bombs > 0) {
+      for (int i = 0; i < MAX_BOMBS; i++) {
+        if (game->bombs[i].countdown <= 0) {
+          game->bombs[i].countdown = 3;
+          game->bombs[i].position = player->position;
+          break;
+        }
+      }
+      player->bombs--;
+
+      if (player->is_recording_echo &&
+          player->recording_frame < MAX_ECHO_FRAMES) {
+        player->current_recording[player->recording_frame].position =
+            player->position;
+        player->current_recording[player->recording_frame].action.kind =
+            CMD_PLANT;
+        player->recording_frame++;
+      }
+    }
+  }
+
+  void update_pressure_buttons(GameState * game) {
+    PlayerState *player = &game->player;
+    bool in_super = player->phase_system.state == PHASE_STATE_SUPERPOSITION;
+
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+      PressureButton *b = &game->buttons[i];
+      if (!b->is_active)
+        continue;
+
+      b->is_pressed = false;
+
+      /* Player on button? */
+      if (ivec2_eq(player->position, b->position)) {
+        if (in_super || player->phase_system.current_phase == b->phase) {
+          b->is_pressed = true;
+        }
+      }
+      /* Echo on button? */
+      for (int e = 0; e < MAX_ECHOS; e++) {
+        if (game->echos[e].active &&
+            ivec2_eq(game->echos[e].position, b->position)) {
+          if (game->echos[e].phase == b->phase) {
+            b->is_pressed = true;
+          }
+        }
+      }
+
+      /* Colapsor on button? */
+      for (int c = 0; c < MAX_COLAPSORES; c++) {
+        if (!game->colapsores[c].dead &&
+            ivec2_eq(game->colapsores[c].position, b->position)) {
           b->is_pressed = true;
         }
       }
     }
   }
-}
 
-void handle_entangle_action(GameState *game) {
-  // Toggle entanglement with entities adjacent to player
-  PlayerState *player = &game->player;
-  bool any_entangled = false;
+  void handle_entangle_action(GameState * game) {
+    // Toggle entanglement with entities adjacent to player
+    PlayerState *player = &game->player;
+    bool any_entangled = false;
 
-  for (int i = 0; i < MAX_COLAPSORES; i++) {
-    ColapsarState *colapsor = &game->colapsores[i];
-    if (colapsor->dead)
-      continue;
+    for (int i = 0; i < MAX_COLAPSORES; i++) {
+      ColapsarState *colapsor = &game->colapsores[i];
+      if (colapsor->dead)
+        continue;
 
-    if (ivec2_dist_manhattan(player->position, colapsor->position) == 1) {
-      colapsor->entangled_with_player = !colapsor->entangled_with_player;
-      any_entangled = true;
-      if (colapsor->entangled_with_player)
-        game->player.entanglements_created++;
+      // Increased range to 2 (Chebyshev/King distance) for easier use
+      int dx = abs(player->position.x - colapsor->position.x);
+      int dy = abs(player->position.y - colapsor->position.y);
 
-      // Visual feedback
-      if (colapsor->entangled_with_player) {
-        colapsor->eyes = EYES_SURPRISED;
-      } else {
-        colapsor->eyes = EYES_OPEN;
+      // Check range (Chebyshev distance <= 3 for better usability)
+      if (dx <= 3 && dy <= 3) {
+        // Toggle state
+        colapsor->entangled_with_player = !colapsor->entangled_with_player;
+        any_entangled = true;
+
+        if (colapsor->entangled_with_player) {
+          game->player.entanglements_created++;
+          colapsor->eyes = EYES_SURPRISED;
+          spawn_spark_effect(game, colapsor->position, GREEN);
+          spawn_floating_text(game, colapsor->position, "ENTRELAZADO!", GREEN);
+        } else {
+          colapsor->eyes = EYES_OPEN;
+          spawn_spark_effect(game, colapsor->position, WHITE);
+          spawn_floating_text(game, colapsor->position, "DESVINCULADO", WHITE);
+        }
+      }
+    }
+
+    if (any_entangled) {
+      if (IsAudioSoundValid(entangle_sound))
+        PlayAudioSound(entangle_sound);
+    } else {
+      // Feedback if no valid target found
+      spawn_floating_text(game, player->position, "NO HAY OBJETIVO", RED);
+    }
+  }
+
+  void update_oracles(GameState * game) {
+    for (int i = 0; i < MAX_ORACLES; i++) {
+      GroverOracle *oracle = &game->oracles[i];
+      if (!oracle->active) {
+        // Maybe animate idle state?
       }
     }
   }
 
-  if (any_entangled) {
-    if (IsAudioSoundValid(entangle_sound))
-      PlayAudioSound(entangle_sound);
-  }
-}
-
-void update_oracles(GameState *game) {
-  for (int i = 0; i < MAX_ORACLES; i++) {
-    GroverOracle *oracle = &game->oracles[i];
-    if (!oracle->active) {
-      // Maybe animate idle state?
+  void execute_turn(GameState * game, Command cmd) {
+    if (game->player.is_stuck) {
+      game->player.stuck_turns--;
+      if (game->player.stuck_turns <= 0) {
+        game->player.is_stuck = false;
+      }
+      return;
     }
-  }
-}
 
-void execute_turn(GameState *game, Command cmd) {
-  if (game->player.is_stuck) {
-    game->player.stuck_turns--;
-    if (game->player.stuck_turns <= 0) {
-      game->player.is_stuck = false;
+    game->turn_animation = 1.0f;
+    game->turn_count++;
+
+    game_explosions_turn(game);
+    game_items_turn(game);
+
+    if (cmd.kind == CMD_STEP) {
+      game_player_turn(game, cmd.dir);
+    } else if (cmd.kind == CMD_PLANT) {
+      handle_plant_bomb(game);
+      PlayAudioSound(plant_bomb_sound);
+      spawn_spark_effect(game, game->player.position, ORANGE);
+    } else if (cmd.kind == CMD_PHASE_CHANGE) {
+      handle_phase_change(game);
+      spawn_spark_effect(game, game->player.position, SKYBLUE);
+    } else if (cmd.kind == CMD_SUPERPOSITION) {
+      handle_superposition(game);
+      spawn_spark_effect(game, game->player.position, PURPLE);
+    } else if (cmd.kind == CMD_INTERACT) {
+      handle_portal_teleport(game);
+      spawn_spark_effect(game, game->player.position, MAGENTA);
+    } else if (cmd.kind == CMD_ENTANGLE) {
+      handle_entangle_action(game);
+      spawn_spark_effect(game, game->player.position, GREEN);
+    } else if (cmd.kind == CMD_WAIT) {
+      if (game->player.phase_system.state == PHASE_STATE_SUPERPOSITION) {
+        SetAudioSoundPitch(phase_shift_sound, 0.5f);
+        PlayAudioSound(phase_shift_sound);
+      }
+      if (game->player.is_recording_echo &&
+          game->player.recording_frame < MAX_ECHO_FRAMES) {
+        game->player.current_recording[game->player.recording_frame].position =
+            game->player.position;
+        game->player.current_recording[game->player.recording_frame]
+            .action.kind = CMD_WAIT;
+        game->player.recording_frame++;
+      }
     }
-    return;
-  }
 
-  game->turn_animation = 1.0f;
-  game->turn_count++;
+    game_bombs_turn(game);
+    game_colapsores_turn(game);
+    update_phase_system(game);
+    update_coherence(game);
+    update_quantum_echos(game);
+    update_quantum_detectors(game);
+    update_pressure_buttons(game);
+    update_oracles(game);
 
-  game_explosions_turn(game);
-  game_items_turn(game);
-
-  if (cmd.kind == CMD_STEP) {
-    game_player_turn(game, cmd.dir);
-  } else if (cmd.kind == CMD_PLANT) {
-    handle_plant_bomb(game);
-    PlayAudioSound(plant_bomb_sound);
-    spawn_spark_effect(game, game->player.position, ORANGE);
-  } else if (cmd.kind == CMD_PHASE_CHANGE) {
-    handle_phase_change(game);
-    spawn_spark_effect(game, game->player.position, SKYBLUE);
-  } else if (cmd.kind == CMD_SUPERPOSITION) {
-    handle_superposition(game);
-    spawn_spark_effect(game, game->player.position, PURPLE);
-  } else if (cmd.kind == CMD_INTERACT) {
-    handle_portal_teleport(game);
-    spawn_spark_effect(game, game->player.position, MAGENTA);
-  } else if (cmd.kind == CMD_ENTANGLE) {
-    handle_entangle_action(game);
-    spawn_spark_effect(game, game->player.position, GREEN);
-  } else if (cmd.kind == CMD_WAIT) {
-    if (game->player.phase_system.state == PHASE_STATE_SUPERPOSITION) {
-      SetAudioSoundPitch(phase_shift_sound, 0.5f);
-      PlayAudioSound(phase_shift_sound);
+    for (int i = 0; i < MAX_TUNNELS; i++) {
+      if (attempt_quantum_tunnel(game, i)) {
+        PlayAudioSound(teleport_sound);
+        game_items_turn(game); // Force pickup check immediately
+        break;
+      }
     }
-    if (game->player.is_recording_echo &&
-        game->player.recording_frame < MAX_ECHO_FRAMES) {
-      game->player.current_recording[game->player.recording_frame].position =
-          game->player.position;
-      game->player.current_recording[game->player.recording_frame].action.kind =
-          CMD_WAIT;
-      game->player.recording_frame++;
-    }
-  }
 
-  game_bombs_turn(game);
-  game_colapsores_turn(game);
-  update_phase_system(game);
-  update_coherence(game);
-  update_quantum_echos(game);
-  update_quantum_detectors(game);
-  update_pressure_buttons(game);
-  update_oracles(game);
-
-  for (int i = 0; i < MAX_TUNNELS; i++) {
-    if (attempt_quantum_tunnel(game, i)) {
-      PlayAudioSound(teleport_sound);
-      break;
-    }
+    check_level_events(game);
   }
 
-  check_level_events(game);
-}
+  bool check_level_complete(GameState * game) {
+    if (game->exit_position.x < 0)
+      return false;
+    return ivec2_eq(game->player.position, game->exit_position);
+  }
 
-bool check_level_complete(GameState *game) {
-  if (game->exit_position.x < 0)
-    return false;
-  return ivec2_eq(game->player.position, game->exit_position);
-}
-
-/* check_level_events is defined in levels.c */
+  /* check_level_events is defined in levels.c */

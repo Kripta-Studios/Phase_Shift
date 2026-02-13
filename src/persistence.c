@@ -8,11 +8,20 @@ void save_game(GameState *game) {
 
     // Save Encyclopedia Unlocked Status
     for (int i = 0; i < game->encyclopedia_count; i++) {
-      fwrite(&game->encyclopedia[i].unlocked, sizeof(bool), 1, file);
+      // Safety check: ensure we don't write out of bounds if count corrupted
+      if (i < 10)
+        fwrite(&game->encyclopedia[i].unlocked, sizeof(bool), 1, file);
     }
 
+    // Save Persistent Player Stats
+    fwrite(&game->player.deaths, sizeof(int), 1, file);
+    fwrite(&game->player.measurements_made, sizeof(int), 1, file);
+    fwrite(&game->player.entanglements_created, sizeof(int), 1, file);
+    fwrite(&game->player.phase_shifts, sizeof(int), 1, file);
+
     fclose(file);
-    printf("Game Saved! Highest Level: %d\n", game->highest_level_unlocked);
+    printf("Game Saved! Highest Level: %d, Deaths: %d\n",
+           game->highest_level_unlocked, game->player.deaths);
   } else {
     printf("Failed to save game.\n");
   }
@@ -25,13 +34,34 @@ void load_game(GameState *game) {
 
     // Load Encyclopedia Unlocked Status
     for (int i = 0; i < game->encyclopedia_count; i++) {
-      if (i < 10) { // Safety check against header MAX
+      if (i < 10) { // Safety check
         fread(&game->encyclopedia[i].unlocked, sizeof(bool), 1, file);
       }
     }
 
+    // Load Persistent Player Stats
+    // Check if file has enough data (backward compatibility)
+    long pos = ftell(file);
+    fseek(file, 0, SEEK_END);
+    long end = ftell(file);
+    fseek(file, pos, SEEK_SET);
+
+    if (end - pos >= sizeof(int) * 4) {
+      fread(&game->player.deaths, sizeof(int), 1, file);
+      fread(&game->player.measurements_made, sizeof(int), 1, file);
+      fread(&game->player.entanglements_created, sizeof(int), 1, file);
+      fread(&game->player.phase_shifts, sizeof(int), 1, file);
+    } else {
+      printf("Save file from older version. Stats reset.\n");
+      game->player.deaths = 0;
+      game->player.measurements_made = 0;
+      game->player.entanglements_created = 0;
+      game->player.phase_shifts = 0;
+    }
+
     fclose(file);
-    printf("Game Loaded! Highest Level: %d\n", game->highest_level_unlocked);
+    printf("Game Loaded! Highest Level: %d, Deaths: %d\n",
+           game->highest_level_unlocked, game->player.deaths);
   } else {
     printf("No save file found. Starting fresh.\n");
     game->highest_level_unlocked = 0;

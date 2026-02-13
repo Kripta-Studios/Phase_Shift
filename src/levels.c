@@ -350,13 +350,13 @@ void load_level_6(GameState *game) {
   }
 
   /* Túnel 1: (7,4) -> (11,7) [Zona 2] - EMBOSCADA */
-  spawn_tunnel(game, ivec2(7, 4), ivec2(4, 3));
+  spawn_tunnel(game, ivec2(7, 4), ivec2(1, 1), ivec2(4, 3));
 
   /* GUARDIA ESPERANDO EN ZONA 2 (el "Comité de Bienvenida") */
   spawn_guard(game, ivec2(14, 7));
 
   /* Túnel 2: (16,6) -> (20,9) [Zona 3] */
-  spawn_tunnel(game, ivec2(16, 6), ivec2(4, 3));
+  spawn_tunnel(game, ivec2(16, 6), ivec2(1, 1), ivec2(4, 3));
 
   /* DETECTOR EN ZONA 3 (Salida) */
   spawn_detector(game, ivec2(22, rows / 2), DIR_UP, PHASE_RED);
@@ -494,7 +494,8 @@ void load_level_8(GameState *game) {
 
   /* ZONA 3: The Escape */
   /* Tunel para atravesar muro final */
-  spawn_tunnel(game, ivec2(24, 6), ivec2(4, 3)); /* Teleporta a 28 (safe) */
+  spawn_tunnel(game, ivec2(24, 6), ivec2(1, 1),
+               ivec2(4, 3)); /* Teleporta a 28 (safe) */
 
   /* Muro final */
   for (int y = 5; y < 10; y++)
@@ -609,13 +610,26 @@ void load_level(GameState *game, int level_index) {
   }
 
   // Reset Level Stats
+  // Reset Level Stats ONLY if it's a fresh start of a new level code?
+  // User wants stats to ACCUMULATE even if they die and restart.
+  // So we should NOT reset deaths/measurements/etc here.
+  // But wait, if they start a NEW game, stats should be 0.
+  // `init_game_state` zeroes the whole GameState, so stats start at 0.
+  // `load_level` is called during gameplay.
+  // If we comment these out, stats will persist across levels AND restarts.
+  // We just need to reset `steps_taken` and `level_time` for the current run
+  // functionality? Let's reset transient level progress, but keep "lifetime"
+  // stats.
+
   game->player.steps_taken = 0;
-  game->player.measurements_made = 0;
-  game->player.entanglements_created = 0;
-  game->player.phase_shifts = 0;
-  game->player.deaths = 0;
   game->player.level_time = 0.0;
-  game->player.qubit_count = 0;
+  // game->player.measurements_made // KEEP
+  // game->player.entanglements_created // KEEP
+  // game->player.phase_shifts // KEEP
+  // game->player.deaths // KEEP
+  game->player.qubit_count = 0; // Items reset
+  game->player.keys = 0;        // Items reset
+  game->player.bombs = 0;       // Items reset
 
   switch (level_index) {
   case 0:
@@ -662,6 +676,18 @@ void load_level(GameState *game, int level_index) {
     break;
   case 14:
     load_level_15(game);
+    break;
+  case 15:
+    load_level_16(game);
+    break;
+  case 16:
+    load_level_17(game);
+    break;
+  case 17:
+    load_level_18(game);
+    break;
+  case 18:
+    load_level_19(game);
     break;
   default:
     load_level_1(game);
@@ -921,6 +947,55 @@ void show_level_dialog(GameState *game) {
             "Usa todo lo que has aprendido!",
             MAX_DIALOG_TEXT);
     break;
+  case 15:
+    strncpy(d->pages[0].text,
+            "GROVER II (SUPERPOSICION)\n\n"
+            "Muros de fase y detectores bloquean el camino.\n"
+            "Algunos muros solo son pasables en una fase.\n\n"
+            "ESTRATEGIA:\n"
+            "1. Observa el patron de los detectores\n"
+            "2. Usa SUPERPOSICION para probar caminos seguros\n"
+            "3. Cambia de fase [Z] segun el muro que cruces\n"
+            "4. La salida requiere una llave.",
+            MAX_DIALOG_TEXT);
+    break;
+  case 16:
+    strncpy(d->pages[0].text,
+            "ENTRELAZAMIENTO CUANTICO\n\n"
+            "El guardia esta encerrado pero tiene el BOTON.\n"
+            "Tu estas fuera pero tienes la SALIDA.\n\n"
+            "ESTRATEGIA:\n"
+            "1. Acercate al guardia y pulsa [E] para ENTRELAZAR\n"
+            "2. Muevete: el guardia copiara tus movimientos\n"
+            "3. Guialo hacia el boton rojo\n4. Cuando pise el boton, corre a "
+            "la salida\n\n"
+            "Usa COHERENCIA para mantener el vinculo.",
+            MAX_DIALOG_TEXT);
+    break;
+  case 17:
+    strncpy(d->pages[0].text,
+            "BUSQUEDA DE ORACULO\n\n"
+            "Cuatro camaras. Una llave.\n"
+            "Detectores vigilan el cruce central.\n\n"
+            "ESTRATEGIA:\n"
+            "1. Identifica la camara con la llave\n"
+            "2. Usa SUPERPOSICION para explorar sin riesgo\n"
+            "3. Cuidado con el guardia custodiando la llave\n"
+            "4. Vuelve al centro y sal por abajo.",
+            MAX_DIALOG_TEXT);
+    break;
+  case 18:
+    strncpy(d->pages[0].text,
+            "EJECUCION FINAL\n\n"
+            "Tres botones dispersos.\n"
+            "Muros de fase oscilantes.\n"
+            "Guardias en patrulla.\n\n"
+            "MISION:\n"
+            "Activa los TRES botones para abrir la barricada final.\n"
+            "Usa todo: Eco, Entrelazamiento, Bombas.\n\n"
+            "Es el fin del camino.",
+            MAX_DIALOG_TEXT);
+    break;
   default:
     strncpy(d->pages[0].text, "Proceda con precaucion.", MAX_DIALOG_TEXT);
     break;
@@ -1152,6 +1227,81 @@ void check_level_events(GameState *game) {
         PlayAudioSound(phase_shift_sound);
     }
   }
+
+  /* NIVEL 15 (PRUEBA FINAL): Dos botones abren la salida */
+  if (game->current_level == 14) {
+    bool all_pressed = true;
+    int active_count = 0;
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+      if (game->buttons[i].is_active) {
+        active_count++;
+        if (!game->buttons[i].is_pressed)
+          all_pressed = false;
+      }
+    }
+    if (active_count > 0 && all_pressed) {
+      int gate_col = game->map->cols - 2;
+      bool was_closed = false;
+      for (int y = 0; y < game->map->rows; y++) {
+        if (game->map->data[y][gate_col] == CELL_BARRICADE) {
+          game->map->data[y][gate_col] = CELL_FLOOR;
+          was_closed = true;
+        }
+      }
+      if (was_closed)
+        PlayAudioSound(phase_shift_sound);
+    }
+  }
+
+  /* NIVEL 17 (ENTRELAZAMIENTO): Boton abre salida */
+  if (game->current_level == 16) {
+    bool any_pressed = false;
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+      if (game->buttons[i].is_active && game->buttons[i].is_pressed) {
+        any_pressed = true;
+        break;
+      }
+    }
+    if (any_pressed) {
+      // Open barricades surrounding exit
+      bool was_closed = false;
+      for (int y = 0; y < game->map->rows; y++) {
+        for (int x = 0; x < game->map->cols; x++) {
+          if (game->map->data[y][x] == CELL_BARRICADE) {
+            game->map->data[y][x] = CELL_FLOOR;
+            was_closed = true;
+          }
+        }
+      }
+      if (was_closed)
+        PlayAudioSound(phase_shift_sound);
+    }
+  }
+
+  /* NIVEL 19 (EJECUCION FINAL): 3 botones abren la compuerta final */
+  if (game->current_level == 18) {
+    bool all_pressed = true;
+    int active_count = 0;
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+      if (game->buttons[i].is_active) {
+        active_count++;
+        if (!game->buttons[i].is_pressed)
+          all_pressed = false;
+      }
+    }
+    if (active_count > 0 && all_pressed) {
+      int gate_col = game->map->cols - 3;
+      bool was_closed = false;
+      for (int y = 0; y < game->map->rows; y++) {
+        if (game->map->data[y][gate_col] == CELL_BARRICADE) {
+          game->map->data[y][gate_col] = CELL_FLOOR;
+          was_closed = true;
+        }
+      }
+      if (was_closed)
+        PlayAudioSound(phase_shift_sound);
+    }
+  }
 }
 
 void load_level_11(GameState *game) {
@@ -1324,28 +1474,207 @@ void load_level_15(GameState *game) {
   spawn_button(game, ivec2(12, rows / 2 - 2), PHASE_RED);
   spawn_button(game, ivec2(12, rows / 2 + 3), PHASE_BLUE);
 
-  /* Barricada antes de la salida */
-  for (int y = 0; y < rows; y++)
-    game->map->data[y][17] = CELL_BARRICADE;
+  /* Barricade blocking exit, opened by button */
+  /* FULLY BLOCK the exit area */
+  /* Barricade blocking exit, opened by button */
+  /* FULLY BLOCK the exit area */
+  for (int y = 0; y < rows; y++) {
+    game->map->data[y][cols - 2] = CELL_WALL; // Solid wall at x=20
+  }
+  game->map->data[6][cols - 2] = CELL_BARRICADE; // The only way through
+  game->map->data[5][cols - 2] = CELL_BARRICADE; // Wider opening
+  game->map->data[7][cols - 2] = CELL_BARRICADE;
 
-  /* Guardia custodiando la zona de botones */
-  spawn_guard(game, ivec2(14, rows / 2));
+  game->exit_position = ivec2(cols - 1, 6);
+  game->map->data[6][cols - 1] = CELL_EXIT;
 
-  /* Bomba */
-  allocate_item(game, ivec2(3, 3), ITEM_BOMB_REFILL);
-  game->player.bombs = 1;
-  game->player.bomb_slots = 2;
+  game->player.position = ivec2(1, rows / 2);
+}
 
-  /* Llave tras la barricada */
-  allocate_item(game, ivec2(19, rows / 2), ITEM_KEY);
+void load_level_16(GameState *game) {
+  int rows = 16;
+  int cols = 24;
+  init_game_state(game, rows, cols);
+  snprintf(game->level_name, 64, "NIVEL 16: TUNEL CUANTICO (GROVER II)");
+  game->current_level = 15;
+  make_room(game);
 
-  /* Coherencia */
-  allocate_item(game, ivec2(7, rows / 2), ITEM_COHERENCE_PICKUP);
+  /* Central Chamber (Accessible only via Tunnel) */
+  for (int x = 10; x <= 14; x++) {
+    for (int y = 6; y <= 10; y++) {
+      game->map->data[y][x] = CELL_WALL;
+    }
+  }
+  game->map->data[8][12] = CELL_FLOOR; // Inside chamber
 
-  /* Puerta y salida */
-  game->map->data[rows / 2][20] = CELL_DOOR;
-  game->exit_position = ivec2(21, rows / 2);
-  game->map->data[rows / 2][21] = CELL_EXIT;
+  // Tunnel 1: Outside (4,4) -> Inside (12,8)
+  spawn_tunnel(game, ivec2(4, 4), ivec2(1, 1), ivec2(8, 4));
+
+  // Tunnel 2: Inside (12,8) -> Outside (4,4) (Return ticket!)
+  spawn_tunnel(game, ivec2(12, 8), ivec2(1, 1), ivec2(-8, -4));
+
+  allocate_item(game, ivec2(12, 8), ITEM_KEY); // Central Key
+
+  /* Maze layout */
+  for (int x = 6; x < 20; x += 4) {
+    game->map->data[4][x] = CELL_WALL_RED;
+    game->map->data[rows - 4][x] = CELL_WALL_BLUE;
+  }
+
+  /* Detectors */
+  spawn_detector(game, ivec2(8, 2), DIR_DOWN, PHASE_RED);
+  spawn_detector(game, ivec2(16, rows - 2), DIR_UP, PHASE_BLUE);
+
+  /* Outer Key */
+  allocate_item(game, ivec2(22, 2), ITEM_KEY);
+
+  /* Exit - Double Door */
+  game->map->data[rows / 2][cols - 3] = CELL_DOOR;
+  game->map->data[rows / 2][cols - 2] = CELL_DOOR;
+  game->exit_position = ivec2(cols - 1, rows / 2);
+  game->map->data[rows / 2][cols - 1] = CELL_EXIT;
 
   game->player.position = ivec2(2, rows / 2);
+}
+
+void load_level_17(GameState *game) {
+  int rows = 16;
+  int cols = 24;
+  init_game_state(game, rows, cols);
+  snprintf(game->level_name, 64, "NIVEL 17: ENTRELAZAMIENTO FINAL");
+  game->current_level = 16;
+  make_room(game);
+
+  /* Exit ISOLATED by Barricades */
+  for (int y = 0; y < rows; y++)
+    game->map->data[y][cols - 4] = CELL_WALL;
+  game->map->data[rows / 2][cols - 4] = CELL_BARRICADE;
+
+  game->exit_position = ivec2(cols - 2, rows / 2);
+  game->map->data[rows / 2][cols - 2] = CELL_EXIT;
+
+  /* Guard Cage */
+  for (int x = 16; x <= 20; x++) {
+    game->map->data[4][x] = CELL_WALL;  // Top
+    game->map->data[10][x] = CELL_WALL; // Bottom
+  }
+  for (int y = 4; y <= 10; y++) {
+    game->map->data[y][16] = CELL_WALL; // Left
+    game->map->data[y][20] = CELL_WALL; // Right
+  }
+  game->map->data[7][16] = CELL_WALL_RED; // Viewport
+
+  /* Button inside cage */
+  spawn_button(game, ivec2(18, 7), PHASE_RED);
+
+  /* Guard inside cage */
+  spawn_guard(game, ivec2(17, 7));
+
+  /* Player Start */
+  game->player.position = ivec2(2, rows / 2);
+
+  /* Coherence & Advice */
+  allocate_item(game, ivec2(8, 4), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(8, 10), ITEM_COHERENCE_PICKUP);
+}
+
+void load_level_18(GameState *game) {
+  // Keep existing Level 18 (Oracle)
+  int rows = 18;
+  int cols = 26;
+  init_game_state(game, rows, cols);
+  snprintf(game->level_name, 64, "NIVEL 18: GROVER IV (ORACULO)");
+  game->current_level = 17;
+  make_room(game);
+
+  /* Oracle Search: 4 Chambers */
+  for (int x = 2; x < 12; x++)
+    game->map->data[8][x] = CELL_WALL;
+  for (int y = 2; y < 8; y++)
+    game->map->data[y][12] = CELL_WALL;
+
+  for (int x = 14; x < 24; x++)
+    game->map->data[8][x] = CELL_WALL;
+  for (int y = 2; y < 8; y++)
+    game->map->data[y][14] = CELL_WALL;
+
+  for (int y = 10; y < 16; y++)
+    game->map->data[y][12] = CELL_WALL;
+  for (int y = 10; y < 16; y++)
+    game->map->data[y][14] = CELL_WALL;
+
+  game->map->data[8][12] = CELL_FLOOR;
+  game->map->data[8][14] = CELL_FLOOR;
+
+  spawn_detector(game, ivec2(13, 2), DIR_DOWN, PHASE_RED);
+  spawn_detector(game, ivec2(13, 15), DIR_UP, PHASE_BLUE);
+
+  allocate_item(game, ivec2(20, 4), ITEM_KEY);
+  allocate_item(game, ivec2(6, 4), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(6, 12), ITEM_BOMB_REFILL);
+  allocate_item(game, ivec2(20, 12), ITEM_COHERENCE_PICKUP);
+
+  spawn_guard(game, ivec2(18, 5));
+
+  game->exit_position = ivec2(13, 17);
+  game->map->data[17][13] = CELL_EXIT;
+  game->map->data[16][13] = CELL_DOOR;
+  game->player.position = ivec2(13, 9);
+}
+
+void load_level_19(GameState *game) {
+  int rows = 20;
+  int cols = 30;
+  init_game_state(game, rows, cols);
+  snprintf(game->level_name, 64, "NIVEL 19: EJECUCION FINAL");
+  game->current_level = 18;
+  make_room(game);
+
+  /* Complex architecture */
+  for (int x = 0; x < cols; x++) {
+    if (x % 4 == 0)
+      game->map->data[6][x] = CELL_WALL_RED;
+    if (x % 4 == 2)
+      game->map->data[12][x] = CELL_WALL_BLUE;
+  }
+
+  /* RE-REDESIGN: 2 Buttons (Player + Echo) but HARDER */
+  /* Remove one Red Button. Add Lasers. Add Blue Key. Add Yellow Spheres. */
+
+  /* Button 1 (Red) - Top Left */
+  spawn_button(game, ivec2(12, 6), PHASE_RED);
+
+  /* Button 2 (Blue) - Bottom Right */
+  spawn_button(game, ivec2(12, 14), PHASE_BLUE);
+
+  /* Lasers (Detectors) guarding paths */
+  spawn_detector(game, ivec2(15, 2), DIR_DOWN, PHASE_GREEN);
+  spawn_detector(game, ivec2(15, 18), DIR_UP, PHASE_YELLOW);
+
+  /* Blue Key required for exit */
+  allocate_item(game, ivec2(15, 10), ITEM_KEY);
+
+  /* Yellow Spheres (Coherence) */
+  allocate_item(game, ivec2(4, 16), ITEM_COHERENCE_PICKUP);
+  allocate_item(game, ivec2(26, 4), ITEM_COHERENCE_PICKUP);
+
+  /* Guards */
+  spawn_guard(game, ivec2(15, 6));
+  spawn_guard(game, ivec2(15, 14));
+
+  /* Final gate */
+  game->map->data[rows / 2][cols - 3] = CELL_DOOR; // Needs Blue Key
+  for (int y = 0; y < rows; y++) {
+    if (y != rows / 2)
+      game->map->data[y][cols - 4] = CELL_BARRICADE; // Outer ring
+  }
+  // Actually, gate is BARRICADE opened by buttons.
+  // And DOOR opened by Key.
+  game->map->data[rows / 2][cols - 4] = CELL_BARRICADE;
+
+  game->exit_position = ivec2(cols - 1, rows / 2);
+  game->map->data[rows / 2][cols - 1] = CELL_EXIT;
+
+  game->player.position = ivec2(2, rows / 2);
+  game->player.bombs = 2;
 }

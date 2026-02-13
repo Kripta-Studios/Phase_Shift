@@ -10,7 +10,6 @@
 #include <string.h>
 #include <time.h>
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif
@@ -35,7 +34,7 @@
 #define GUARD_ATTACK_COOLDOWN 10
 #define EXPLOSION_LENGTH 10
 #define EYES_ANGULAR_VELOCITY 10.0f
-#define MAX_LEVELS 15
+#define MAX_LEVELS 19
 #define MAX_BUTTONS 10
 #define MAX_DIALOG_PAGES 12
 #define MAX_DIALOG_TEXT 512
@@ -158,6 +157,7 @@ typedef struct {
 typedef struct {
   IVector2 position;
   IVector2 size;
+  IVector2 target_offset;
   float success_probability;
   bool last_failed;
 } QuantumTunnel;
@@ -395,6 +395,16 @@ typedef struct {
 
   // Level transition: deferred next level loading
   int pending_next_level; // -1 = none, >=0 = level to load after transition
+
+  // Floating Text System
+  struct {
+    Vector2 position;
+    char text[32];
+    Color color;
+    float life;
+    float velocity_y;
+    bool active;
+  } floating_texts[20];
 } GameState;
 
 // Global Externs

@@ -208,11 +208,11 @@ int main(void) {
       } else {
         if (check_level_complete(&game)) {
           PlayAudioSound(level_complete_sound);
-          save_game(&game);
           if (game.current_level < MAX_LEVELS - 1) {
             if (game.current_level + 1 > game.highest_level_unlocked) {
               game.highest_level_unlocked = game.current_level + 1;
             }
+            save_game(&game); // Save AFTER updating progress
             game.pending_next_level = game.current_level + 1;
             game.state_kind = GAME_STATE_LEVEL_TRANSITION;
             game.level_transition_timer = 1.0f;
@@ -253,8 +253,8 @@ int main(void) {
             cmd.kind = CMD_SUPERPOSITION;
             input = true;
           } else if (IsKeyPressed(KEY_E)) {
-            /* E: Interact (Teleport/Entangle) */
-            cmd.kind = CMD_INTERACT;
+            /* E: Entangle (Action) */
+            cmd.kind = CMD_ENTANGLE;
             input = true;
           } else if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_LEFT_SHIFT)) {
             /* X or Shift: Plant Bomb */
@@ -389,7 +389,9 @@ int main(void) {
       EndMode2D();
 
       render_dark_effects(&game);
+      render_dark_effects(&game);
       render_hud(&game);
+      update_and_render_floating_texts(&game);
       render_encyclopedia(&game);
 
       if (game.state_kind == GAME_STATE_PAUSE) {

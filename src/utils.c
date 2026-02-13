@@ -285,9 +285,20 @@ void init_palette(void) {
 }
 
 void init_game_state(GameState *game, int rows, int cols) {
+  // Backup persistent state
   int saved_level = game->current_level;
   GameStateKind saved_state = game->state_kind;
   DialogSystem saved_dialog = game->dialog;
+  int saved_highest_level = game->highest_level_unlocked;
+  QuantumConcept saved_encyclopedia[10];
+  memcpy(saved_encyclopedia, game->encyclopedia, sizeof(saved_encyclopedia));
+  int saved_encyclopedia_count = game->encyclopedia_count;
+
+  // Backup persistent player stats
+  int saved_deaths = game->player.deaths;
+  int saved_measurements = game->player.measurements_made;
+  int saved_entanglements = game->player.entanglements_created;
+  int saved_phase_shifts = game->player.phase_shifts;
 
   if (game->map) {
     map_free(game->map);
@@ -301,9 +312,20 @@ void init_game_state(GameState *game, int rows, int cols) {
   }
 
   memset(game, 0, sizeof(GameState));
+
+  // Restore persistent state
   game->current_level = saved_level;
   game->state_kind = saved_state;
   game->dialog = saved_dialog;
+  game->highest_level_unlocked = saved_highest_level;
+  memcpy(game->encyclopedia, saved_encyclopedia, sizeof(saved_encyclopedia));
+  game->encyclopedia_count = saved_encyclopedia_count;
+
+  // Restore persistent player stats
+  game->player.deaths = saved_deaths;
+  game->player.measurements_made = saved_measurements;
+  game->player.entanglements_created = saved_entanglements;
+  game->player.phase_shifts = saved_phase_shifts;
 
   game->map = map_create(rows, cols);
   game->player.position = ivec2(1, 1);
