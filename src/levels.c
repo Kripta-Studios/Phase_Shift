@@ -689,6 +689,9 @@ void load_level(GameState *game, int level_index) {
   case 18:
     load_level_19(game);
     break;
+  case 19:
+    load_level_20(game);
+    break;
   default:
     load_level_1(game);
     break;
@@ -967,8 +970,10 @@ void show_level_dialog(GameState *game) {
             "ESTRATEGIA:\n"
             "1. Acercate al guardia y pulsa [E] para ENTRELAZAR\n"
             "2. Muevete: el guardia copiara tus movimientos\n"
-            "3. Guialo hacia el boton rojo\n4. Cuando pise el boton, corre a "
-            "la salida\n\n"
+            "3. Guialo hacia el boton rojo\n"
+            "4. EL PORTAL SE ACTIVARA (Brillara)\n"
+            "5. Mueve al guardia fuera del portal\n"
+            "6. Entra en la jaula (Usa fase [Z]) y pisa el portal.\n\n"
             "Usa COHERENCIA para mantener el vinculo.",
             MAX_DIALOG_TEXT);
     break;
@@ -987,13 +992,26 @@ void show_level_dialog(GameState *game) {
   case 18:
     strncpy(d->pages[0].text,
             "EJECUCION FINAL\n\n"
-            "Tres botones dispersos.\n"
+            "Dos botones dispersos.\n"
             "Muros de fase oscilantes.\n"
             "Guardias en patrulla.\n\n"
             "MISION:\n"
-            "Activa los TRES botones para abrir la barricada final.\n"
-            "Usa todo: Eco, Entrelazamiento, Bombas.\n\n"
-            "Es el fin del camino.",
+            "Activa los DOS botones para abrir la barricada final.\n"
+            "Necesitas la LLAVE AZUL para la puerta de salida.\n\n"
+            "Usa todo: Eco, Entrelazamiento, Bombas.",
+            MAX_DIALOG_TEXT);
+    break;
+  case 19:
+    strncpy(d->pages[0].text,
+            "FINAL CUANTICO\n\n"
+            "Bienvenido al nucleo del procesador.\n\n"
+            "OBJETIVO: Recolectar 3 LLAVES de seguridad.\n"
+            "AMENAZAS:\n"
+            "- Lasers de Alta Energia (-40 Coherencia)\n"
+            "- Red de Fase Compleja\n"
+            "- Multiples Guardias de Seguridad\n\n"
+            "Usa TUNELES y PORTALES para navegar las islas.\n"
+            "Esta es la prueba final de tu estado cuantico.\n",
             MAX_DIALOG_TEXT);
     break;
   default:
@@ -1557,16 +1575,16 @@ void load_level_17(GameState *game) {
   game->exit_position = ivec2(cols - 2, rows / 2);
   game->map->data[rows / 2][cols - 2] = CELL_EXIT;
 
-  /* Guard Cage */
-  for (int x = 16; x <= 20; x++) {
-    game->map->data[4][x] = CELL_WALL;  // Top
-    game->map->data[10][x] = CELL_WALL; // Bottom
+  /* Guard Cage (Expanded for maneuvering) */
+  for (int x = 15; x <= 21; x++) {
+    game->map->data[3][x] = CELL_WALL;  // Top
+    game->map->data[11][x] = CELL_WALL; // Bottom
   }
-  for (int y = 4; y <= 10; y++) {
-    game->map->data[y][16] = CELL_WALL; // Left
-    game->map->data[y][20] = CELL_WALL; // Right
+  for (int y = 3; y <= 11; y++) {
+    game->map->data[y][15] = CELL_WALL; // Left
+    game->map->data[y][21] = CELL_WALL; // Right
   }
-  game->map->data[7][16] = CELL_WALL_RED; // Viewport
+  game->map->data[7][15] = CELL_WALL_RED; // Viewport (Left side)
 
   /* Button inside cage */
   spawn_button(game, ivec2(18, 7), PHASE_RED);
@@ -1680,4 +1698,83 @@ void load_level_19(GameState *game) {
 
   game->player.position = ivec2(2, rows / 2);
   game->player.bombs = 2;
+}
+
+void load_level_20(GameState *game) {
+  int rows = 24;
+  int cols = 32;
+  init_game_state(game, rows, cols);
+  snprintf(game->level_name, 64, "NIVEL 20: FINAL CUANTICO");
+  game->current_level = 19;
+  make_room(game);
+
+  /* SECTION 1: The Mesh (Phase Wall Maze) */
+  for (int x = 4; x < 12; x++) {
+    for (int y = 2; y < rows - 2; y += 2) {
+      if ((x + y) % 2 == 0)
+        game->map->data[y][x] = CELL_WALL_RED;
+      else
+        game->map->data[y][x] = CELL_WALL_BLUE;
+    }
+  }
+
+  /* SECTION 2: The Void (Islands & Tunnels) */
+  /* Wall separating Sec 1 & 2 */
+  for (int y = 0; y < rows; y++)
+    game->map->data[y][12] = CELL_WALL;
+  game->map->data[rows / 2][12] = CELL_DOOR; // Door 1
+
+  /* Island 1 (Tunnel Entrance) */
+  // Left side is open to Door 1
+
+  /* Island 2 (Central) */
+  for (int x = 16; x < 24; x++) {
+    for (int y = 4; y < rows - 4; y++) {
+      if (x == 16 || x == 23 || y == 4 || y == rows - 5)
+        game->map->data[y][x] = CELL_WALL; // Enclosed island
+      else
+        game->map->data[y][x] = CELL_FLOOR;
+    }
+  }
+  /* Tunnel (Area 2x2) to Island 2 */
+  spawn_tunnel(game, ivec2(10, rows / 2), ivec2(2, 2), ivec2(8, 0));
+
+  /* SECTION 3: The Collapse (Final Gauntlet) */
+  /* Wall separating Sec 2 & 3 */
+  for (int y = 0; y < rows; y++)
+    game->map->data[y][24] = CELL_WALL;
+  game->map->data[6][24] = CELL_DOOR;  // Door 2
+  game->map->data[18][24] = CELL_DOOR; // Door 3
+
+  /* Portal from Island 2 to Sec 3 */
+  spawn_portal(game, ivec2(20, 8), 0, PHASE_BLUE);
+  spawn_portal(game, ivec2(26, 4), 0, PHASE_BLUE); // Destination
+
+  /* HAZARDS */
+  /* Lasers (Drain 40 Coherence) */
+  spawn_detector(game, ivec2(14, 2), DIR_DOWN, PHASE_RED);
+  spawn_detector(game, ivec2(22, 20), DIR_UP, PHASE_BLUE);
+  spawn_detector(game, ivec2(26, 10), DIR_LEFT, PHASE_RED);
+  spawn_detector(game, ivec2(28, 14), DIR_RIGHT, PHASE_BLUE);
+
+  /* ENEMIES */
+  spawn_guard(game, ivec2(20, 12)); // Island 2
+  spawn_guard(game, ivec2(28, 6));  // Sec 3
+  spawn_guard(game, ivec2(26, 18)); // Sec 3
+
+  /* KEYS */
+  allocate_item(game, ivec2(8, 4), ITEM_KEY);   // Key 1 (In Mesh)
+  allocate_item(game, ivec2(20, 16), ITEM_KEY); // Key 2 (Island 2)
+  allocate_item(game, ivec2(30, 2), ITEM_KEY);  // Key 3 (Deep Sec 3)
+
+  /* EXTRAS */
+  allocate_item(game, ivec2(6, 20), ITEM_BOMB_REFILL);
+  allocate_item(game, ivec2(18, 10), ITEM_COHERENCE_PICKUP);
+
+  /* EXIT */
+  game->exit_position = ivec2(cols - 2, rows / 2);
+  game->map->data[rows / 2][cols - 2] = CELL_EXIT;
+
+  game->player.position = ivec2(2, rows / 2);
+  game->player.bombs = 3;
 }
