@@ -1263,18 +1263,15 @@ void check_level_events(GameState *game) {
       }
     }
     if (any_pressed) {
-      // Open barricades surrounding exit
-      bool was_closed = false;
-      for (int y = 0; y < game->map->rows; y++) {
-        for (int x = 0; x < game->map->cols; x++) {
-          if (game->map->data[y][x] == CELL_BARRICADE) {
-            game->map->data[y][x] = CELL_FLOOR;
-            was_closed = true;
-          }
+      // Activate Portal to Exit
+      for (int i = 0; i < MAX_PORTALS; i++) {
+        if (game->portals[i].position.x == 3 &&
+            game->portals[i].position.y == 8) {
+          game->portals[i].active = true;
+          game->portals[i].glow_intensity = 2.0f;
         }
       }
-      if (was_closed)
-        PlayAudioSound(phase_shift_sound);
+      PlayAudioSound(phase_shift_sound);
     }
   }
 
@@ -1290,7 +1287,7 @@ void check_level_events(GameState *game) {
       }
     }
     if (active_count > 0 && all_pressed) {
-      int gate_col = game->map->cols - 3;
+      int gate_col = game->map->cols - 4;
       bool was_closed = false;
       for (int y = 0; y < game->map->rows; y++) {
         if (game->map->data[y][gate_col] == CELL_BARRICADE) {
@@ -1550,6 +1547,14 @@ void load_level_17(GameState *game) {
     game->map->data[y][cols - 4] = CELL_WALL;
   game->map->data[rows / 2][cols - 4] = CELL_BARRICADE;
 
+  /* Portal: Start -> Exit (Inactive initially) */
+  spawn_portal(game, ivec2(3, 8), 1, PHASE_RED);
+  game->portals[MAX_PORTALS - 1].active =
+      false; // Manually deactivate after spawn
+
+  /* Portal Destination: Near Exit */
+  spawn_portal(game, ivec2(cols - 4, rows / 2), 0, PHASE_RED);
+
   game->exit_position = ivec2(cols - 2, rows / 2);
   game->map->data[rows / 2][cols - 2] = CELL_EXIT;
 
@@ -1641,15 +1646,15 @@ void load_level_19(GameState *game) {
   /* RE-REDESIGN: 2 Buttons (Player + Echo) but HARDER */
   /* Remove one Red Button. Add Lasers. Add Blue Key. Add Yellow Spheres. */
 
-  /* Button 1 (Red) - Top Left */
-  spawn_button(game, ivec2(12, 6), PHASE_RED);
+  /* Button 1 (Red) - Top Left - CLOSER */
+  spawn_button(game, ivec2(14, 8), PHASE_RED);
 
-  /* Button 2 (Blue) - Bottom Right */
-  spawn_button(game, ivec2(12, 14), PHASE_BLUE);
+  /* Button 2 (Blue) - Bottom Right - CLOSER */
+  spawn_button(game, ivec2(14, 12), PHASE_BLUE);
 
-  /* Lasers (Detectors) guarding paths */
-  spawn_detector(game, ivec2(15, 2), DIR_DOWN, PHASE_GREEN);
-  spawn_detector(game, ivec2(15, 18), DIR_UP, PHASE_YELLOW);
+  /* Lasers (Detectors) guarding paths - REMOVED Green/Yellow */
+  // spawn_detector(game, ivec2(15, 2), DIR_DOWN, PHASE_GREEN);
+  // spawn_detector(game, ivec2(15, 18), DIR_UP, PHASE_YELLOW);
 
   /* Blue Key required for exit */
   allocate_item(game, ivec2(15, 10), ITEM_KEY);

@@ -247,6 +247,7 @@ typedef struct {
   int attack_cooldown;
   bool teleports;
   bool entangled_with_player;
+  int entanglement_turns;
 } ColapsarState;
 
 typedef struct {
