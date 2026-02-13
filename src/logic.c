@@ -757,6 +757,7 @@ void collect_item_at(GameState *game, IVector2 pos) {
       item->kind = ITEM_NONE;
       player->coherence.current =
           fminf(100.0f, player->coherence.current + 5.0f);
+      PlayAudioSound(key_pickup_sound); // Added sound
       spawn_spark_effect(game, item->position, BLUE);
       spawn_centered_text(game, "+5% COHERENCE", YELLOW);
       break;

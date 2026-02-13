@@ -243,26 +243,37 @@ void load_level_4(GameState *game) {
   game->map->data[rows / 2][11] = CELL_WALL_BLUE;
 
   /*
-   * Botones CERCANOS (distancia 6) a la derecha del mapa.
-   * Jugador va al botón A, activa eco, espera, va al B.
-   * Eco reproduce y se queda en A.
+   * REDESIGN:
+   * 1. Buttons moved to Left (accessible).
+   * 2. Barricade blocks path to Right.
+   * 3. Key is past Barricade.
+   * 4. Exit is surrounded by Doors (requires Key).
    */
-  spawn_button(game, ivec2(15, 4), PHASE_RED);         /* Botón A arriba */
-  spawn_button(game, ivec2(15, rows - 5), PHASE_BLUE); /* Botón B abajo */
-  /* Distancia entre botones: |4 - (rows-5)| = |4 - 9| = 5 movimientos ✓ */
+  spawn_button(game, ivec2(4, 4), PHASE_RED);         /* Botón A (Izq Arriba) */
+  spawn_button(game, ivec2(4, rows - 5), PHASE_BLUE); /* Botón B (Izq Abajo) */
 
-  /* Barrera antes de la salida — se abre con ambos botones */
+  /* Barrera (Muro Rojo) que bloquea el paso, se abre con botones */
   for (int y = 0; y < rows; y++) {
-    game->map->data[y][17] = CELL_BARRICADE;
+    game->map->data[y][14] = CELL_BARRICADE;
   }
+  /* Apertura central en barricada (opcional, si es muro completo, botones lo
+   * borran) */
+  /* Barricades are distinct from Walls. Buttons deactivate ALL barricades in
+   * level. */
 
-  /* Llave accesible directamente */
-  allocate_item(game, ivec2(10, 3), ITEM_KEY);
+  /* Llave (Alejada de la salida: Esquina Sup. Izq) */
+  allocate_item(game, ivec2(1, 1), ITEM_KEY);
 
-  /* Puerta y salida */
-  game->map->data[rows / 2][17] = CELL_DOOR;
+  /* Salida rodeada de puertas */
   game->exit_position = ivec2(18, rows / 2);
   game->map->data[rows / 2][18] = CELL_EXIT;
+
+  // Surround Exit
+  game->map->data[rows / 2][17] = CELL_DOOR;     // Left
+  game->map->data[rows / 2 - 1][18] = CELL_DOOR; // Top
+  game->map->data[rows / 2 + 1][18] = CELL_DOOR; // Bottom
+  if (19 < cols)
+    game->map->data[rows / 2][19] = CELL_DOOR; // Right
 
   /* Coherencia */
   allocate_item(game, ivec2(3, 3), ITEM_COHERENCE_PICKUP);
@@ -327,6 +338,13 @@ void load_level_5(GameState *game) {
   game->exit_position = ivec2(22, rows / 2);
   game->map->data[rows / 2][22] = CELL_EXIT;
 
+  // Surround with Doors
+  game->map->data[rows / 2][21] = CELL_DOOR;     // Left
+  game->map->data[rows / 2 - 1][22] = CELL_DOOR; // Top
+  game->map->data[rows / 2 + 1][22] = CELL_DOOR; // Bottom
+  if (23 < cols)
+    game->map->data[rows / 2][23] = CELL_DOOR; // Right
+
   game->player.position = ivec2(2, rows / 2);
 }
 
@@ -379,7 +397,12 @@ void load_level_6(GameState *game) {
 
   game->exit_position = ivec2(26, rows / 2);
   game->map->data[rows / 2][26] = CELL_EXIT;
-  game->map->data[rows / 2][25] = CELL_DOOR;
+  // Surround with Doors
+  game->map->data[rows / 2][25] = CELL_DOOR;     // Left
+  game->map->data[rows / 2 - 1][26] = CELL_DOOR; // Top
+  game->map->data[rows / 2 + 1][26] = CELL_DOOR; // Bottom
+  if (27 < cols)
+    game->map->data[rows / 2][27] = CELL_DOOR; // Right
 
   game->player.position = ivec2(2, rows / 2);
 }
@@ -409,7 +432,11 @@ void load_level_7(GameState *game) {
   /* Corredor SUPERIOR: Muros de fase + GUARDIA */
   for (int x = 7; x < cols - 5; x += 3)
     game->map->data[3][x] = CELL_WALL_RED;
-  spawn_guard(game, ivec2(cols - 9, 3)); /* Guardia esperando al final */
+
+  // FIX: Remove wall at 16 to give guard space
+  game->map->data[3][16] = CELL_FLOOR;
+
+  spawn_guard(game, ivec2(16, 3)); /* Guardia con espacio (15-17 libre) */
 
   /* Corredor MEDIO: GUARDIA + Detector */
   spawn_guard(game, ivec2(12, 8));
@@ -515,9 +542,15 @@ void load_level_8(GameState *game) {
   allocate_item(game, ivec2(12, rows / 2), ITEM_BOMB_REFILL);
   game->player.bombs = 2;
 
-  game->map->data[rows / 2][27] = CELL_DOOR;
   game->exit_position = ivec2(28, rows / 2);
   game->map->data[rows / 2][28] = CELL_EXIT;
+
+  // Surround with Doors
+  game->map->data[rows / 2][27] = CELL_DOOR;     // Left
+  game->map->data[rows / 2 - 1][28] = CELL_DOOR; // Top
+  game->map->data[rows / 2 + 1][28] = CELL_DOOR; // Bottom
+  if (29 < cols)
+    game->map->data[rows / 2][29] = CELL_DOOR; // Right
 
   game->player.position = ivec2(2, rows / 2);
 }
@@ -844,7 +877,8 @@ void show_level_dialog(GameState *game) {
             "ZONA 1: Laberinto de fase (cambia fase)\n"
             "ZONA 2: Detectores + 2 botones (usa eco)\n"
             "ZONA 3: Tunel cuantico + llave\n\n"
-            "ESTRATEGIA:\n"
+            "TIP: Usa la BOMBA (B) para romper el muro\n"
+            "que encierra al enemigo si se queda atascado.\n"
             "- Cruza el laberinto alternando fases\n"
             "- Usa un ECO para un boton\n"
             "- Pisa el otro boton para abrir barrera\n"
@@ -1061,7 +1095,7 @@ void check_level_events(GameState *game) {
     }
 
     if (active_count > 0 && all_pressed) {
-      int gate_col = 17;
+      int gate_col = 14; /* FIXED: Was 17, now bar is at 14 */
       bool was_closed = false;
       for (int y = 0; y < game->map->rows; y++) {
         if (game->map->data[y][gate_col] == CELL_BARRICADE) {
@@ -1698,6 +1732,7 @@ void load_level_19(GameState *game) {
 
   game->player.position = ivec2(2, rows / 2);
   game->player.bombs = 2;
+  game->player.phase_system.current_phase = PHASE_BLUE;
 }
 
 void load_level_20(GameState *game) {

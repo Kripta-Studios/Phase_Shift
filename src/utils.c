@@ -173,15 +173,15 @@ Color get_cell_color(Cell cell, PhaseKind current_phase,
   case CELL_WALL_RED:
     /* Solid (blocks) when in RED phase, ghostly (passable) otherwise */
     if (current_phase == PHASE_RED && !in_superposition) {
-      return (Color){255, 60, 40, 255};
+      return PALETTE[17]; // Vivid Red
     } else {
-      return (Color){255, 60, 40, 60};
+      return (Color){PALETTE[17].r, PALETTE[17].g, PALETTE[17].b, 60};
     }
   case CELL_WALL_BLUE:
     if (current_phase == PHASE_BLUE && !in_superposition) {
-      return (Color){40, 180, 255, 255};
+      return PALETTE[18]; // Vivid Blue
     } else {
-      return (Color){40, 180, 255, 60};
+      return (Color){PALETTE[18].r, PALETTE[18].g, PALETTE[18].b, 60};
     }
   case CELL_WALL_GREEN:
     if (current_phase == PHASE_GREEN && !in_superposition) {
@@ -272,13 +272,13 @@ void init_palette(void) {
   PALETTE[14] = (Color){80, 100, 255, 255}; /* Blue accent */
   PALETTE[15] = (Color){0, 255, 100, 255};  /* Exit: neon green */
   PALETTE[16] = (Color){15, 18, 28, 255};   /* Grid lines: near invisible */
-  PALETTE[17] = (Color){255, 50, 50, 255};  /* Phase red neon */
-  PALETTE[18] = (Color){30, 180, 255, 255}; /* Phase blue neon */
+  PALETTE[17] = (Color){255, 0, 50, 255};   /* Phase red neon (VIBRANT) */
+  PALETTE[18] = (Color){0, 100, 255, 255};  /* Phase blue neon (VIBRANT) */
   PALETTE[19] = (Color){160, 60, 220, 255}; /* Superposition purple */
 
-  // New definitions
-  PALETTE[20] = (Color){50, 255, 50, 255};  /* Phase Green */
-  PALETTE[21] = (Color){255, 255, 0, 255};  /* Phase Yellow */
+  // New definitions (VIBRANT)
+  PALETTE[20] = (Color){0, 255, 0, 255};    /* Phase Green (Pure Lime) */
+  PALETTE[21] = (Color){255, 255, 0, 255};  /* Phase Yellow (Pure Yellow) */
   PALETTE[22] = (Color){80, 255, 80, 255};  /* Platform Green */
   PALETTE[23] = (Color){255, 255, 80, 255}; /* Platform Yellow */
   PALETTE[24] = (Color){255, 0, 255, 255};  /* Logic Purple */
