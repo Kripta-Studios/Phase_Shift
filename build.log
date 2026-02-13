@@ -1,0 +1,5 @@
+windres phase_shift.rc -o phase_shift.o
+gcc src/main.o src/utils.o src/logic.o src/render.o src/levels.o src/menus.o src/persistence.o src/atmosphere.o src/quantum.o src/audio.o phase_shift.o -o phase_shift.exe -L. -lraylib -lopengl32 -lgdi32 -lwinmm -lole32
+C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: src/quantum.o:quantum.c:(.text+0x460): multiple definition of `handle_portal_teleport'; src/logic.o:logic.c:(.text+0x3d50): first defined here
+collect2.exe: error: ld returned 1 exit status
+make: *** [Makefile:27: phase_shift.exe] Error 1

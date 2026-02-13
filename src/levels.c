@@ -1263,10 +1263,10 @@ void check_level_events(GameState *game) {
       }
     }
     if (any_pressed) {
-      // Activate Portal to Exit
+      // Activate Portal in Guard Cage
       for (int i = 0; i < MAX_PORTALS; i++) {
-        if (game->portals[i].position.x == 3 &&
-            game->portals[i].position.y == 8) {
+        if (game->portals[i].position.x == 17 &&
+            game->portals[i].position.y == 7) {
           game->portals[i].active = true;
           game->portals[i].glow_intensity = 2.0f;
         }
@@ -1547,13 +1547,12 @@ void load_level_17(GameState *game) {
     game->map->data[y][cols - 4] = CELL_WALL;
   game->map->data[rows / 2][cols - 4] = CELL_BARRICADE;
 
-  /* Portal: Start -> Exit (Inactive initially) */
-  spawn_portal(game, ivec2(3, 8), 1, PHASE_RED);
-  game->portals[MAX_PORTALS - 1].active =
-      false; // Manually deactivate after spawn
+  /* Portal: Guard Cage -> Exit (Inactive initially) */
+  spawn_portal(game, ivec2(17, 7), 1, PHASE_RED);
+  game->portals[MAX_PORTALS - 1].active = false; // Manually deactivate
 
-  /* Portal Destination: Near Exit */
-  spawn_portal(game, ivec2(cols - 4, rows / 2), 0, PHASE_RED);
+  /* Portal Destination: Between Barricade and Exit */
+  spawn_portal(game, ivec2(cols - 3, rows / 2), 0, PHASE_RED);
 
   game->exit_position = ivec2(cols - 2, rows / 2);
   game->map->data[rows / 2][cols - 2] = CELL_EXIT;
@@ -1667,14 +1666,13 @@ void load_level_19(GameState *game) {
   spawn_guard(game, ivec2(15, 6));
   spawn_guard(game, ivec2(15, 14));
 
-  /* Final gate */
-  game->map->data[rows / 2][cols - 3] = CELL_DOOR; // Needs Blue Key
+  /* Final gate: Button Barricade -> Key Door -> Exit */
+  game->map->data[rows / 2][cols - 2] = CELL_DOOR; // Needs Blue Key
   for (int y = 0; y < rows; y++) {
     if (y != rows / 2)
       game->map->data[y][cols - 4] = CELL_BARRICADE; // Outer ring
   }
-  // Actually, gate is BARRICADE opened by buttons.
-  // And DOOR opened by Key.
+
   game->map->data[rows / 2][cols - 4] = CELL_BARRICADE;
 
   game->exit_position = ivec2(cols - 1, rows / 2);

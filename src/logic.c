@@ -1,5 +1,6 @@
 #include "logic.h"
 #include "levels.h"
+#include "qiskit.h"
 #include "quantum.h"
 #include "render.h"
 #include <string.h>
@@ -870,12 +871,8 @@ void game_colapsores_turn(GameState *game) {
       if (delta.x != 0 || delta.y != 0) {
         IVector2 target = ivec2_add(colapsor->position, delta);
         if (within_map(game, target)) {
-          Cell cell = game->map->data[target.y][target.x];
-          // Simple collision check for entangled entity
-          if (cell != CELL_WALL && cell != CELL_BARRICADE &&
-              cell != CELL_DOOR && cell != CELL_WALL_RED &&
-              cell != CELL_WALL_BLUE && cell != CELL_WALL_GREEN &&
-              cell != CELL_WALL_YELLOW) {
+          /* Fix: Use proper collision logic so they don't clip walls */
+          if (colapsor_can_stand_here(game, target, i)) {
             colapsor->position = target;
           }
         }
@@ -1067,6 +1064,10 @@ void handle_entangle_action(GameState *game) {
   PlayerState *player = &game->player;
   bool any_entangled = false;
 
+  // Apply strict coherence cost regardless of outcome
+  player->coherence.current -= 10.0f;
+  spawn_floating_text(game, player->position, "-10 COHERENCIA", RED);
+
   for (int i = 0; i < MAX_COLAPSORES; i++) {
     ColapsarState *colapsor = &game->colapsores[i];
     if (colapsor->dead)
@@ -1144,21 +1145,7 @@ void execute_turn(GameState *game, Command cmd) {
     handle_superposition(game);
     spawn_spark_effect(game, game->player.position, PURPLE);
   } else if (cmd.kind == CMD_INTERACT) {
-    // handle_portal_teleport(game); // Wait, this function was missing in Step
-    // 32? It was used in execute_turn in Step 32 line 1151. But I don't see
-    // definition there. It might have been omitted from view? Checking
-    // Logic.h... Logic.h doesn't declare it. Checking Logic.c Step 32... define
-    // handle_portal_teleport? No. Maybe it was defined earlier? If it's
-    // missing, I should check if it was caught in previous views. It wasn't in
-    // 1-800 or 800-1198. Line 1151 in Step 32: handle_portal_teleport(game);
-    // Compilation error didn't mention it.
-    // Maybe it IS defined in the file but I missed it because of truncation?
-    // Or it's in a different file?
-    // Let's assume it's there or I should comment it out if not found?
-    // Actually, I'll search for it later. For now, I'll keep the line if I see
-    // it. But wait, I am WRITING the file. If I don't include it, it's gone. I
-    // need to find where handle_portal_teleport is! It's likely near
-    // spawn_portal or something.
+    handle_portal_teleport(game);
     spawn_spark_effect(game, game->player.position, MAGENTA);
   } else if (cmd.kind == CMD_ENTANGLE) {
     handle_entangle_action(game);
@@ -1194,6 +1181,9 @@ void execute_turn(GameState *game, Command cmd) {
       break;
     }
   }
+
+  /* Automatic Portal Check */
+  handle_portal_teleport(game);
 
   check_level_events(game);
 }

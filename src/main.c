@@ -2,10 +2,12 @@
 #include "common.h"
 #include "levels.h"
 #include "persistence.h"
+#include "qiskit.h"
 #include "render.h"
 #include "utils.h"
 
 void cleanup_game(GameState *game) {
+  qiskit_shutdown();
   if (game->map) {
     map_free(game->map);
   }
@@ -29,6 +31,7 @@ int main(void) {
 
   InitAudioSystem();
   SetMasterVolume(1.0f);
+  qiskit_init();
 
   /* Load assets */
   for (int i = 0; i < 4; i++) {
