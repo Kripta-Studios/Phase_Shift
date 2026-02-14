@@ -35,13 +35,11 @@ Desarrollado por **Kripta Studios** · Motor: [Raylib](https://www.raylib.com/) 
 | `W/A/S/D` o `↑←↓→` | Movimiento (basado en turnos) |
 | `Z` | Cambiar de fase cuántica |
 | `ESPACIO` | Activar Superposición / Crear Eco |
-| `X` o `SHIFT IZQ` | Plantar bomba |
-| `T` o `.` | Esperar (pasar turno sin moverse) |
-| `E` | Interactuar (Portales / Entrelazamiento) |
-| `H` | Enciclopedia cuántica |
+| `X` | Plantar bomba |
+| `T` | Esperar (pasar turno sin moverse) |
+| `E` | Entrelazarse con enemigo |
 | `ENTER` | Avanzar diálogos / Reintentar nivel |
-| `ESC` | Menú de pausa |
-| `=` / `-` | Zoom in / out |
+| `ESC` | Cerrar el juego |
 
 ---
 
