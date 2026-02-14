@@ -5,11 +5,11 @@
 
 // Opaque handle to a Miniaudio sound object
 typedef struct AudioSound {
-  void *internal;
+    void *internal;
 } AudioSound;
 
 typedef struct AudioMusic {
-  void *internal;
+    void *internal;
 } AudioMusic;
 
 // Core Audio System Functions

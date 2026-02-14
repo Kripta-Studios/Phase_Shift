@@ -15,3 +15,4 @@ RELEASE.md
 *.txt
 release-linux/
 raylib/
+.vscode/
