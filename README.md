@@ -319,4 +319,4 @@ make release-linux
 
 ## 📄 Licencia
 
-Ver [LICENSE.txt](./LICENSE.txt)
+Ver [LICENSE](./LICENSE)
