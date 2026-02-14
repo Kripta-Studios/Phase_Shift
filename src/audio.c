@@ -1,6 +1,8 @@
+#ifndef BUILD_LINUX
 #define MA_NO_JACK
 #define MA_NO_ALSA
 #define MA_NO_PULSEAUDIO
+#endif
 #define MINIAUDIO_IMPLEMENTATION
 #include "audio.h"
 #include "miniaudio.h"

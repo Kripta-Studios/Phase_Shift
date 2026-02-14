@@ -4,7 +4,7 @@ LDFLAGS = -L. -lraylib -lopengl32 -lgdi32 -lwinmm -lole32 -lwininet
 
 SRC = src/main.c src/utils.c src/logic.c src/render.c src/levels.c src/menus.c src/persistence.c src/atmosphere.c src/quantum.c src/audio.c src/qiskit.c
 OBJ = $(SRC:.c=.o)
-EXEC = phase_shift.exe
+EXEC = Phase_Shift.exe
 
 # Default target (debug mode)
 all: CFLAGS += -DDEBUG_MODE
@@ -38,12 +38,13 @@ endif
 
 
 # Linux Release Target
+release-linux: CFLAGS += -DBUILD_LINUX
 release-linux: LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-release-linux: EXEC = phase_shift
-release-linux: clean $(OBJ)
-	$(CC) $(OBJ) -o $(EXEC) $(LDFLAGS)
+release-linux: EXEC = Phase_Shift
+release-linux: clean
+	$(CC) $(CFLAGS) $(SRC) -o $(EXEC) $(LDFLAGS)
 	mkdir -p release-linux/assets
-	cp $(EXEC) release-linux/
+	mv $(EXEC) release-linux/
 	cp /usr/local/lib/libraylib.so* release-linux/ || echo "Warning: libraylib.so not found in /usr/local/lib"
 	cp icon.png release-linux/assets/
 	cp -r assets/* release-linux/assets/
